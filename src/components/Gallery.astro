@@ -8,12 +8,17 @@ interface Props {
 
 const { images, dayNum } = Astro.props;
 const hasImages = images.length > 0;
+const videoCount = images.filter(i => i.video).length;
+const photoCount = images.length - videoCount;
+const countLabel = videoCount > 0
+  ? `— ${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''}`
+  : `— ${images.length} photos`;
 ---
 
 <section class="gallery-section" id="gallery">
   <h2 class="gallery-title">
     <span class="hand">Gallery</span>
-    <span class="mono gallery-count">—&nbsp;{images.length} photos</span>
+    <span class="mono gallery-count">{countLabel}</span>
   </h2>
 
   {hasImages ? (
@@ -26,30 +31,48 @@ const hasImages = images.length > 0;
         >
           <button
             class="pig-trigger"
-            aria-label={`Open photo: ${img.caption || img.alt}`}
+            aria-label={img.video ? `Play video: ${img.caption || img.alt}` : `Open photo: ${img.caption || img.alt}`}
             data-index={i}
           >
             <div class="pig-img-wrap">
-              <img
-                src={img.src}
-                alt={img.alt}
-                loading="lazy"
-                decoding="async"
-                onerror="this.parentElement.classList.add('img-error')"
-              />
-              <!-- Placeholder shown when no image -->
-              <div class="img-placeholder" aria-hidden="true">
-                <svg viewBox="0 0 48 48" fill="none">
-                  <rect width="48" height="48" fill="none"/>
-                  <path d="M8 36l10-14 8 10 6-8 10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
-                  <circle cx="34" cy="16" r="4" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                </svg>
-                <span>Photo coming</span>
-              </div>
-              <div class="pig-overlay" aria-hidden="true">
-                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M15 3h6m0 0v6m0-6l-7 7M9 21H3m0 0v-6m0 6l7-7"/>
-                </svg>
+              {img.video ? (
+                <video
+                  src={img.src}
+                  preload="metadata"
+                  muted
+                  playsinline
+                  class="pig-video"
+                />
+              ) : (
+                <>
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    loading="lazy"
+                    decoding="async"
+                    onerror="this.parentElement.classList.add('img-error')"
+                  />
+                  <div class="img-placeholder" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" fill="none">
+                      <rect width="48" height="48" fill="none"/>
+                      <path d="M8 36l10-14 8 10 6-8 10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+                      <circle cx="34" cy="16" r="4" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                    </svg>
+                    <span>Photo coming</span>
+                  </div>
+                </>
+              )}
+              <div class={`pig-overlay ${img.video ? 'pig-overlay--video' : ''}`} aria-hidden="true">
+                {img.video ? (
+                  <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.55)" stroke="white" stroke-width="1"/>
+                    <polygon points="10,8 18,12 10,16" fill="white"/>
+                  </svg>
+                ) : (
+                  <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M15 3h6m0 0v6m0-6l-7 7M9 21H3m0 0v-6m0 6l7-7"/>
+                  </svg>
+                )}
               </div>
             </div>
             {img.caption && (
@@ -67,7 +90,7 @@ const hasImages = images.length > 0;
 </section>
 
 <!-- Lightbox -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Media viewer" hidden>
   <button class="lb-close" aria-label="Close" id="lbClose">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="18" y1="6" x2="6" y2="18"/>
@@ -75,21 +98,22 @@ const hasImages = images.length > 0;
     </svg>
   </button>
 
-  <button class="lb-prev" aria-label="Previous photo" id="lbPrev">
+  <button class="lb-prev" aria-label="Previous" id="lbPrev">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <polyline points="15,18 9,12 15,6"/>
     </svg>
   </button>
 
   <div class="lb-content">
-    <img src="" alt="" id="lbImg" class="lb-img" />
+    <img src="" alt="" id="lbImg" class="lb-img" style="display:none" />
+    <video src="" id="lbVideo" class="lb-video lb-img" controls playsinline style="display:none"></video>
     <div class="lb-caption-wrap">
       <p class="lb-caption" id="lbCaption"></p>
       <span class="lb-counter" id="lbCounter"></span>
     </div>
   </div>
 
-  <button class="lb-next" aria-label="Next photo" id="lbNext">
+  <button class="lb-next" aria-label="Next" id="lbNext">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <polyline points="9,18 15,12 9,6"/>
     </svg>
@@ -100,11 +124,19 @@ const hasImages = images.length > 0;
   let current = 0;
   const lightbox = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
+  const lbVideo = document.getElementById('lbVideo');
   const lbCaption = document.getElementById('lbCaption');
   const lbCounter = document.getElementById('lbCounter');
   const lbClose = document.getElementById('lbClose');
   const lbPrev = document.getElementById('lbPrev');
   const lbNext = document.getElementById('lbNext');
+
+  function stopVideo() {
+    if (lbVideo.style.display !== 'none') {
+      lbVideo.pause();
+      lbVideo.src = '';
+    }
+  }
 
   function openLightbox(index) {
     current = index;
@@ -116,17 +148,30 @@ const hasImages = images.length > 0;
   }
 
   function closeLightbox() {
+    stopVideo();
     lightbox.classList.remove('visible');
     setTimeout(() => { lightbox.hidden = true; }, 280);
     document.body.style.overflow = '';
   }
 
   function updateLightbox() {
-    const img = images[current];
-    if (!img) return;
-    lbImg.src = img.src;
-    lbImg.alt = img.alt;
-    lbCaption.textContent = img.caption || img.alt || '';
+    const item = images[current];
+    if (!item) return;
+
+    stopVideo();
+
+    if (item.video) {
+      lbImg.style.display = 'none';
+      lbVideo.style.display = '';
+      lbVideo.src = item.src;
+    } else {
+      lbVideo.style.display = 'none';
+      lbImg.style.display = '';
+      lbImg.src = item.src;
+      lbImg.alt = item.alt;
+    }
+
+    lbCaption.textContent = item.caption || item.alt || '';
     lbCounter.textContent = `${current + 1} / ${images.length}`;
     lbPrev.disabled = current === 0;
     lbNext.disabled = current === images.length - 1;
@@ -235,7 +280,8 @@ const hasImages = images.length > 0;
     background: var(--surface, #112238);
   }
 
-  .pig-img-wrap img {
+  .pig-img-wrap img,
+  .pig-img-wrap .pig-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -292,11 +338,10 @@ const hasImages = images.length > 0;
     transition: opacity 0.25s ease;
   }
 
-  .expand-icon {
-    width: 28px;
-    height: 28px;
-    color: white;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  /* Video items: always show play icon at low opacity */
+  .pig-overlay--video {
+    opacity: 0.75;
+    background: transparent;
   }
 
   .pig-trigger:hover .pig-overlay,
@@ -304,8 +349,28 @@ const hasImages = images.length > 0;
     opacity: 1;
   }
 
+  .pig-trigger:hover .pig-overlay--video,
+  .pig-trigger:focus-visible .pig-overlay--video {
+    opacity: 1;
+  }
+
+  .expand-icon {
+    width: 28px;
+    height: 28px;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  .play-icon {
+    width: 48px;
+    height: 48px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+  }
+
   .pig-trigger:hover .pig-img-wrap img,
-  .pig-trigger:focus-visible .pig-img-wrap img {
+  .pig-trigger:focus-visible .pig-img-wrap img,
+  .pig-trigger:hover .pig-video,
+  .pig-trigger:focus-visible .pig-video {
     transform: scale(1.04);
   }
 
@@ -367,6 +432,14 @@ const hasImages = images.length > 0;
     object-fit: contain;
     border-radius: 2px;
     box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  .lb-video {
+    width: min(90vw, 960px);
+    max-height: 80vh;
+    border-radius: 2px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    background: #000;
   }
 
   .lb-caption-wrap {

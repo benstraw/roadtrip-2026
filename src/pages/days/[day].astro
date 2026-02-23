@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import DayNav from '../../components/DayNav.astro';
 import Gallery from '../../components/Gallery.astro';
 import { days } from '../../data/days';
+import fs from 'node:fs';
 
 export function getStaticPaths() {
   return days.map(d => ({
@@ -15,6 +16,12 @@ const { day } = Astro.props;
 const { theme } = day;
 const prevDay = days.find(d => d.day === day.day - 1);
 const nextDay = days.find(d => d.day === day.day + 1);
+
+const mapExts = ['jpg', 'jpeg', 'webp', 'png'];
+const mapExt = mapExts.find(ext =>
+  fs.existsSync(`${process.cwd()}/public/images/days/${day.day}/map.${ext}`)
+);
+const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
 ---
 
 <Base
@@ -264,6 +271,22 @@ const nextDay = days.find(d => d.day === day.day + 1);
     height: 24px;
     background: var(--border);
     flex-shrink: 0;
+  }
+
+  .stat-gallery-link {
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .stat-gallery-link:hover { opacity: 0.7; }
+  .stat-gallery-link .stat-lbl {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .stat-gallery-link .stat-lbl svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0.7;
   }
 
   /* ─── MAIN CONTENT ──────────────────────────────────────────────────────────── */
@@ -548,29 +571,26 @@ const nextDay = days.find(d => d.day === day.day + 1);
   <div class="hero-texture" aria-hidden="true"></div>
 
   <!-- Map book photo slot.
-       To add the drawn map photo: put it at /public/images/days/{day}/map.jpg
-       and change heroPhoto below to the real path. -->
-  {(() => {
-    const heroPhoto = `/images/days/${day.day}/map.jpg`;
-    return (
-      <div class="hero-photo">
-        <img
-          src={heroPhoto}
-          alt={`Drawn map for Day ${day.day}`}
-          onerror="this.parentElement.classList.add('no-photo')"
-        />
-        <div class="hero-photo-placeholder" aria-hidden="true">
-          <svg class="placeholder-icon" viewBox="0 0 80 80" fill="none">
-            <rect x="10" y="15" width="60" height="50" rx="2" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M10 35 L40 20 L70 35" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-            <path d="M25 55 Q40 40 55 55" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-            <circle cx="50" cy="30" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-          </svg>
-          <span class="placeholder-text">Map book — day {day.day}</span>
-        </div>
-      </div>
-    );
-  })()}
+       To add the drawn map photo: drop map.jpg / map.webp / map.png
+       into /public/images/days/{day}/ — detected automatically at build time. -->
+  <div class="hero-photo">
+    {heroPhoto ? (
+      <img
+        src={heroPhoto}
+        alt={`Drawn map for Day ${day.day}`}
+        onerror="this.parentElement.classList.add('no-photo')"
+      />
+    ) : null}
+    <div class="hero-photo-placeholder" aria-hidden="true">
+      <svg class="placeholder-icon" viewBox="0 0 80 80" fill="none">
+        <rect x="10" y="15" width="60" height="50" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 35 L40 20 L70 35" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <path d="M25 55 Q40 40 55 55" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="50" cy="30" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+      </svg>
+      <span class="placeholder-text">Map book — day {day.day}</span>
+    </div>
+  </div>
 
   <div class="hero-scrim" aria-hidden="true"></div>
 
@@ -631,6 +651,18 @@ const nextDay = days.find(d => d.day === day.day + 1);
   <div class="stat-item">
     <span class="stat-val" style="font-size:0.75rem;">{day.from} → {day.to}</span>
   </div>
+  {day.galleryImages.length > 0 && (
+    <>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <a href="#gallery" class="stat-item stat-gallery-link" aria-label={`Jump to gallery — ${day.galleryImages.length} items`}>
+        <span class="stat-val">{day.galleryImages.length}</span>
+        <span class="stat-lbl">
+          {day.galleryImages.filter(i => i.video).length > 0 ? 'photos & video' : 'photos'}
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="8,3 8,13"/><polyline points="4,9 8,13 12,9"/></svg>
+        </span>
+      </a>
+    </>
+  )}
 </div>
 
 <!-- ─── MAIN CONTENT ────────────────────────────────────────────────────────── -->
