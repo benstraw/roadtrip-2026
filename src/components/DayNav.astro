@@ -1,0 +1,348 @@
+---
+import { days } from '../data/days';
+
+interface Props {
+  currentDay: number;
+}
+
+const { currentDay } = Astro.props;
+const prevDay = days.find(d => d.day === currentDay - 1);
+const nextDay = days.find(d => d.day === currentDay + 1);
+---
+
+<nav class="day-nav" aria-label="Day navigation">
+  <!-- Thin route line above the filmstrip -->
+  <div class="route-line" aria-hidden="true">
+    <svg viewBox="0 0 900 12" preserveAspectRatio="none" fill="none">
+      <!-- Background track -->
+      <line x1="5" y1="6" x2="895" y2="6" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <!-- Progress fill up to current day -->
+      <line
+        x1="5" y1="6"
+        x2={`${((currentDay - 1) / (days.length - 1)) * 890 + 5}`} y2="6"
+        stroke="var(--accent, #7ebcd6)"
+        stroke-width="2"
+        opacity="0.7"
+      />
+      <!-- Day dots -->
+      {days.map((d) => {
+        const x = ((d.day - 1) / (days.length - 1)) * 890 + 5;
+        const isActive = d.day === currentDay;
+        const isPast = d.day < currentDay;
+        return (
+          <circle
+            cx={x} cy="6" r={isActive ? 5 : 3}
+            fill={isActive ? d.theme.accent : isPast ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'}
+            stroke={isActive ? d.theme.accent : 'none'}
+            stroke-width={isActive ? '2' : '0'}
+          />
+        );
+      })}
+    </svg>
+  </div>
+
+  <!-- Filmstrip of days -->
+  <div class="filmstrip-wrapper">
+    <button
+      class="nav-arrow prev"
+      aria-label="Previous day"
+      onclick={prevDay ? `window.location='/days/${prevDay.slug}'` : undefined}
+      disabled={!prevDay}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"/>
+      </svg>
+    </button>
+
+    <div class="filmstrip" role="list">
+      {days.map((d) => {
+        const isActive = d.day === currentDay;
+        return (
+          <a
+            href={`/days/${d.slug}`}
+            class={`frame ${isActive ? 'active' : ''}`}
+            style={`--frame-accent: ${d.theme.accent}; --frame-bg: ${d.theme.surface};`}
+            aria-label={`Day ${d.day}: ${d.from} to ${d.to}`}
+            aria-current={isActive ? 'page' : undefined}
+            role="listitem"
+          >
+            <div class="frame-thumb">
+              <div class="thumb-placeholder" style={`background: linear-gradient(135deg, ${d.theme.gradStart}, ${d.theme.gradEnd});`}>
+                <span class="thumb-day">
+                  <span class="thumb-num">{d.day}</span>
+                </span>
+                <div class="landscape" data-theme={d.theme.descriptor} aria-hidden="true"></div>
+              </div>
+              {d.galleryImages[0] && (
+                <img
+                  src={d.galleryImages[0].src}
+                  alt={`Day ${d.day} thumbnail`}
+                  class="thumb-photo"
+                  loading="lazy"
+                  onerror="this.style.display='none'"
+                />
+              )}
+            </div>
+            <div class="frame-info">
+              <span class="frame-day-num">{d.day}</span>
+              <span class="frame-cities">{d.fromShort}→{d.toShort}</span>
+              <span class="frame-date">{d.date.split(' ')[1]}</span>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    <button
+      class="nav-arrow next"
+      aria-label="Next day"
+      onclick={nextDay ? `window.location='/days/${nextDay.slug}'` : undefined}
+      disabled={!nextDay}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9,18 15,12 9,6"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Keyboard nav hint -->
+  <div class="nav-hint" aria-hidden="true">
+    <kbd>←</kbd> <kbd>→</kbd> navigate days
+  </div>
+</nav>
+
+<!-- Keyboard navigation -->
+<script define:vars={{ prevSlug: prevDay?.slug, nextSlug: nextDay?.slug }}>
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft' && prevSlug) window.location.href = `/days/${prevSlug}`;
+    if (e.key === 'ArrowRight' && nextSlug) window.location.href = `/days/${nextSlug}`;
+  });
+
+  // Scroll active frame into view
+  const active = document.querySelector('.frame.active');
+  if (active) {
+    active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+</script>
+
+<style>
+  .day-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: color-mix(in srgb, var(--bg-deep, #060f1a) 90%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+    padding: 0 0 4px;
+  }
+
+  .route-line {
+    width: 100%;
+    height: 12px;
+    padding: 0 3rem;
+  }
+
+  .route-line svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .filmstrip-wrapper {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .nav-arrow {
+    flex-shrink: 0;
+    width: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted, #8ab4cc);
+    transition: color 0.2s, background 0.2s;
+    border-right: 1px solid var(--border, rgba(255,255,255,0.06));
+  }
+
+  .nav-arrow.next {
+    border-right: none;
+    border-left: 1px solid var(--border, rgba(255,255,255,0.06));
+  }
+
+  .nav-arrow:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
+
+  .nav-arrow:not(:disabled):hover {
+    color: var(--accent, #7ebcd6);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .nav-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .filmstrip {
+    flex: 1;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    padding: 4px 6px;
+  }
+
+  .filmstrip::-webkit-scrollbar { display: none; }
+
+  .frame {
+    flex-shrink: 0;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    width: clamp(60px, 9vw, 80px);
+    border: 1px solid transparent;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    background: var(--frame-bg);
+    color: var(--text-muted, #8ab4cc);
+  }
+
+  .frame:hover {
+    transform: translateY(-3px);
+    border-color: var(--frame-accent);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    color: var(--text, #e8f4fb);
+  }
+
+  .frame.active {
+    border-color: var(--frame-accent);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 0 1px var(--frame-accent);
+    color: var(--text, #e8f4fb);
+  }
+
+  .frame-thumb {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 4px;
+    position: relative;
+  }
+
+  .thumb-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+  }
+
+  .thumb-day {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.6);
+    z-index: 2;
+    position: relative;
+  }
+
+  /* Tiny landscape silhouettes via CSS */
+  .landscape {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+  }
+
+  .landscape[data-theme="frozen"],
+  .landscape[data-theme="snowstorm"] {
+    background: linear-gradient(to top, rgba(255,255,255,0.15), transparent);
+    clip-path: polygon(0 100%, 15% 50%, 30% 65%, 50% 30%, 70% 55%, 85% 40%, 100% 60%, 100% 100%);
+  }
+
+  .landscape[data-theme="southern"] {
+    background: linear-gradient(to top, rgba(100,60,20,0.4), transparent);
+    clip-path: polygon(0 100%, 0 70%, 20% 65%, 40% 80%, 60% 60%, 80% 70%, 100% 55%, 100% 100%);
+  }
+
+  .landscape[data-theme="texas-bound"],
+  .landscape[data-theme="desert"],
+  .landscape[data-theme="canyon"],
+  .landscape[data-theme="canyon-night"] {
+    background: linear-gradient(to top, rgba(180,80,20,0.4), transparent);
+    clip-path: polygon(0 100%, 0 55%, 25% 65%, 40% 50%, 60% 60%, 80% 45%, 100% 55%, 100% 100%);
+  }
+
+  .landscape[data-theme="sonoran"] {
+    background: linear-gradient(to top, rgba(160,60,20,0.4), transparent);
+    clip-path: polygon(0 100%, 5% 60%, 15% 65%, 25% 45%, 35% 70%, 50% 40%, 65% 65%, 80% 50%, 95% 55%, 100% 60%, 100% 100%);
+  }
+
+  .landscape[data-theme="sunshine"] {
+    background: linear-gradient(to top, rgba(245,196,0,0.25), transparent);
+    clip-path: polygon(0 100%, 0 75%, 30% 65%, 50% 70%, 70% 60%, 90% 65%, 100% 70%, 100% 100%);
+  }
+
+  .frame-info {
+    padding: 3px 4px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .frame-day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--frame-accent);
+    letter-spacing: 0.05em;
+  }
+
+  .frame-cities {
+    font-size: 0.5rem;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .frame-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.45rem;
+    opacity: 0.5;
+  }
+
+  .nav-hint {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.5rem;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.1em;
+    padding-bottom: 2px;
+  }
+
+  kbd {
+    font-family: inherit;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 2px;
+    padding: 0 3px;
+  }
+</style>

@@ -1,0 +1,771 @@
+---
+import Base from '../../layouts/Base.astro';
+import DayNav from '../../components/DayNav.astro';
+import Gallery from '../../components/Gallery.astro';
+import { days } from '../../data/days';
+
+export function getStaticPaths() {
+  return days.map(d => ({
+    params: { day: d.slug },
+    props: { day: d },
+  }));
+}
+
+const { day } = Astro.props;
+const { theme } = day;
+const prevDay = days.find(d => d.day === day.day - 1);
+const nextDay = days.find(d => d.day === day.day + 1);
+---
+
+<Base
+  title={`Day ${day.day} — ${day.from} to ${day.to}`}
+  description={`Day ${day.day}: ${day.tagline}`}
+  theme={theme}
+>
+
+<style define:vars={{
+  heroGrad: theme.heroGrad,
+  accent: theme.accent,
+  accentSoft: theme.accentSoft,
+  bg: theme.bg,
+  bgDeep: theme.bgDeep,
+  surface: theme.surface,
+  text: theme.text,
+  textMuted: theme.textMuted,
+  border: theme.border,
+}}>
+  /* ─── PAGE SETUP ──────────────────────────────────────────────────────────── */
+  :root {
+    --bg: var(--bg);
+    --bg-deep: var(--bgDeep);
+    --surface: var(--surface);
+    --accent: var(--accent);
+    --accent-soft: var(--accentSoft);
+    --text: var(--text);
+    --text-muted: var(--textMuted);
+    --border: var(--border);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: calc(var(--nav-height, 88px) + 40px);
+  }
+
+  /* ─── HERO ─────────────────────────────────────────────────────────────────── */
+  .day-hero {
+    position: relative;
+    min-height: min(60vh, 520px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+
+  .hero-bg-grad {
+    position: absolute;
+    inset: 0;
+    background: var(--heroGrad);
+  }
+
+  /* Grid/texture overlay */
+  .hero-texture {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mix-blend-mode: overlay;
+  }
+
+  /* The map photo slot */
+  .hero-photo {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.7;
+    mix-blend-mode: luminosity;
+  }
+
+  /* Image fails → .no-photo class added via onerror */
+  .hero-photo img { display: block; }
+  .hero-photo.no-photo img { display: none; }
+
+  /* Placeholder: always behind the image, shows through when img hides */
+  .hero-photo-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: rgba(255,255,255,0.12);
+  }
+
+  .placeholder-icon {
+    width: 80px;
+    height: 80px;
+    opacity: 0.15;
+  }
+
+  .placeholder-text {
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    opacity: 0.3;
+    letter-spacing: 0.05em;
+  }
+
+  /* Gradient scrim at bottom for text legibility */
+  .hero-scrim {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70%;
+    background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+    z-index: 2;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 3;
+    padding: clamp(1.5rem, 5vw, 3rem) clamp(1.25rem, 5vw, 3rem) 2rem;
+  }
+
+  /* Back to index */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+    transition: opacity 0.2s;
+  }
+  .back-link:hover { opacity: 1; }
+  .back-link svg { width: 14px; height: 14px; }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-day {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 0.25em 0.65em;
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+  }
+
+  .meta-date {
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    color: var(--textMuted);
+  }
+
+  .meta-theme {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-left: auto;
+  }
+
+  .hero-route-line {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .route-from { opacity: 0.7; }
+  .route-arrow {
+    font-size: 0.7em;
+    color: var(--accent);
+    opacity: 0.6;
+  }
+  .route-to { color: var(--accent); }
+
+  .hero-tagline {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+    color: var(--textMuted);
+    font-style: italic;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ─── STATS BAR ────────────────────────────────────────────────────────────── */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding: 1rem clamp(1.25rem, 5vw, 3rem);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+  }
+
+  .stats-bar::-webkit-scrollbar { display: none; }
+
+  .stat-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-lbl {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--textMuted);
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ─── MAIN CONTENT ──────────────────────────────────────────────────────────── */
+  .day-content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 5vw, 2.5rem);
+  }
+
+  /* ─── NARRATIVE ─────────────────────────────────────────────────────────────── */
+  .narrative-block {
+    margin-bottom: 2.5rem;
+  }
+
+  .narrative-block p {
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 1.1rem;
+  }
+
+  .narrative-block p:last-child { margin-bottom: 0; }
+
+  /* ─── HIGHLIGHTS ────────────────────────────────────────────────────────────── */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .highlights-list {
+    list-style: none;
+    margin-bottom: 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .highlights-list li {
+    padding: 0.6rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  /* ─── STOPS ─────────────────────────────────────────────────────────────────── */
+  .stops-list {
+    list-style: none;
+    margin-bottom: 2.5rem;
+  }
+
+  .stop-item {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .stop-item:last-child { border-bottom: none; }
+
+  .stop-marker {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 6px;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .stop-info h4 {
+    font-family: 'Raleway', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+  }
+
+  .stop-info p {
+    font-size: 0.8rem;
+    color: var(--textMuted);
+    font-family: 'Caveat', cursive;
+    font-size: 0.95rem;
+  }
+
+  /* ─── MEALS ─────────────────────────────────────────────────────────────────── */
+  .meals-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .meal-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+
+  .meal-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 0.2em 0.5em;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .meal-info {
+    flex: 1;
+  }
+
+  .meal-place {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.1rem;
+  }
+
+  .meal-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.95rem;
+    color: var(--textMuted);
+  }
+
+  /* ─── ACCOMMODATION ─────────────────────────────────────────────────────────── */
+  /* ─── MUSIC ─────────────────────────────────────────────────────────────────── */
+  .music-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .music-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .music-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .music-artist {
+    font-family: 'Raleway', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+
+  .music-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.95rem;
+    color: var(--textMuted);
+  }
+
+  .music-embed {
+    padding: 0 0 0;
+    line-height: 0;
+  }
+
+  .music-embed iframe {
+    display: block;
+    border-radius: 0 !important;
+  }
+
+  /* ─── STAY ─────────────────────────────────────────────────────────────────── */
+  .stay-card {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 2.5rem;
+  }
+
+  .stay-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .stay-info label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .stay-info span {
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ─── DAY NAV PREV/NEXT ──────────────────────────────────────────────────────── */
+  .day-inline-nav {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border);
+  }
+
+  .inline-nav-link {
+    flex: 1;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .inline-nav-link:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--surface) 90%, var(--accent));
+  }
+
+  .inline-nav-link.next { text-align: right; }
+
+  .inline-nav-dir {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .inline-nav-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .inline-nav-date {
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+    color: var(--textMuted);
+  }
+</style>
+
+<!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
+<header class="day-hero">
+  <div class="hero-bg-grad" aria-hidden="true"></div>
+  <div class="hero-texture" aria-hidden="true"></div>
+
+  <!-- Map book photo slot.
+       To add the drawn map photo: put it at /public/images/days/{day}/map.jpg
+       and change heroPhoto below to the real path. -->
+  {(() => {
+    const heroPhoto = `/images/days/${day.day}/map.jpg`;
+    return (
+      <div class="hero-photo">
+        <img
+          src={heroPhoto}
+          alt={`Drawn map for Day ${day.day}`}
+          onerror="this.parentElement.classList.add('no-photo')"
+        />
+        <div class="hero-photo-placeholder" aria-hidden="true">
+          <svg class="placeholder-icon" viewBox="0 0 80 80" fill="none">
+            <rect x="10" y="15" width="60" height="50" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 35 L40 20 L70 35" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+            <path d="M25 55 Q40 40 55 55" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+            <circle cx="50" cy="30" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+          </svg>
+          <span class="placeholder-text">Map book — day {day.day}</span>
+        </div>
+      </div>
+    );
+  })()}
+
+  <div class="hero-scrim" aria-hidden="true"></div>
+
+  <div class="hero-content">
+    <a href="/" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"/>
+      </svg>
+      All Days
+    </a>
+
+    <div class="hero-meta">
+      <span class="meta-day">Day {day.day}</span>
+      <span class="meta-date">{day.dayOfWeek}, {day.date}</span>
+      <span class="meta-theme">{theme.name}</span>
+    </div>
+
+    <div class="hero-route-line">
+      <span class="route-from">{day.from}</span>
+      <span class="route-arrow">→</span>
+      <span class="route-to">{day.to}</span>
+    </div>
+
+    <p class="hero-tagline">{day.tagline}</p>
+  </div>
+</header>
+
+<!-- ─── STATS BAR ──────────────────────────────────────────────────────────── -->
+<div class="stats-bar" role="region" aria-label="Day statistics">
+  <div class="stat-item">
+    <span class="stat-val">{day.miles}</span>
+    <span class="stat-lbl">miles</span>
+  </div>
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <span class="stat-val">{day.duration}</span>
+    <span class="stat-lbl">driving</span>
+  </div>
+  {day.stops.length > 0 && (
+    <>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-val">{day.stops.length}</span>
+        <span class="stat-lbl">stops</span>
+      </div>
+    </>
+  )}
+  {day.meals.length > 0 && (
+    <>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-val">{day.meals.length}</span>
+        <span class="stat-lbl">meals</span>
+      </div>
+    </>
+  )}
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <span class="stat-val" style="font-size:0.75rem;">{day.from} → {day.to}</span>
+  </div>
+</div>
+
+<!-- ─── MAIN CONTENT ────────────────────────────────────────────────────────── -->
+<main>
+  <div class="day-content">
+
+    <!-- Narrative -->
+    {day.narrative.length > 0 && (
+      <section class="narrative-block animate-fade-up">
+        {day.narrative.map(p => <p>{p}</p>)}
+      </section>
+    )}
+
+    <!-- Highlights -->
+    {day.highlights.length > 0 && (
+      <section>
+        <p class="section-label">Highlights</p>
+        <ul class="highlights-list stagger">
+          {day.highlights.map(h => <li>{h}</li>)}
+        </ul>
+      </section>
+    )}
+
+    <!-- Stops -->
+    {day.stops.length > 0 && (
+      <section>
+        <p class="section-label">Stops</p>
+        <ul class="stops-list stagger">
+          {day.stops.map(stop => (
+            <li class="stop-item">
+              <div class="stop-marker" aria-hidden="true"></div>
+              <div class="stop-info">
+                <h4>{stop.name}</h4>
+                {stop.note && <p>{stop.note}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <!-- Meals -->
+    {day.meals.length > 0 && (
+      <section>
+        <p class="section-label">Food</p>
+        <div class="meals-grid stagger">
+          {day.meals.map(meal => (
+            <div class="meal-card">
+              <span class="meal-type">{meal.type}</span>
+              <div class="meal-info">
+                <span class="meal-place">{meal.place}</span>
+                {meal.note && <span class="meal-note">{meal.note}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Accommodation -->
+    <section>
+      <p class="section-label">Stay</p>
+      <div class="stay-card">
+        <span class="stay-icon" aria-hidden="true">🛏</span>
+        <div class="stay-info">
+          <label>Night {day.day}</label>
+          <span>{day.accommodation}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Music embed -->
+    {day.music && (
+      <section class="music-section">
+        <p class="section-label">Music</p>
+        <div class="music-card">
+          <div class="music-meta">
+            <span class="music-artist">{day.music.artist}</span>
+            {day.music.note && <span class="music-note">{day.music.note}</span>}
+          </div>
+          <div class="music-embed">
+            <iframe
+              src={day.music.spotifyEmbed}
+              width="100%"
+              height="152"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              style="border-radius: 8px;"
+              title={`${day.music.artist} on Spotify`}
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Gallery -->
+    <Gallery images={day.galleryImages} dayNum={day.day} />
+
+    <!-- Inline prev/next nav -->
+    <nav class="day-inline-nav" aria-label="Previous and next day">
+      {prevDay ? (
+        <a href={`/days/${prevDay.slug}`} class="inline-nav-link prev">
+          <span class="inline-nav-dir">← Day {prevDay.day}</span>
+          <span class="inline-nav-title">{prevDay.fromShort} → {prevDay.toShort}</span>
+          <span class="inline-nav-date">{prevDay.date}</span>
+        </a>
+      ) : (
+        <div class="inline-nav-link prev" style="opacity:0.3;">
+          <span class="inline-nav-dir">← Start</span>
+          <span class="inline-nav-title">Philadelphia, PA</span>
+          <span class="inline-nav-date">The beginning</span>
+        </div>
+      )}
+
+      {nextDay ? (
+        <a href={`/days/${nextDay.slug}`} class="inline-nav-link next">
+          <span class="inline-nav-dir">Day {nextDay.day} →</span>
+          <span class="inline-nav-title">{nextDay.fromShort} → {nextDay.toShort}</span>
+          <span class="inline-nav-date">{nextDay.date}</span>
+        </a>
+      ) : (
+        <div class="inline-nav-link next" style="opacity:0.3; text-align:right;">
+          <span class="inline-nav-dir">End →</span>
+          <span class="inline-nav-title">California</span>
+          <span class="inline-nav-date">Home.</span>
+        </div>
+      )}
+    </nav>
+
+  </div>
+</main>
+
+<!-- ─── FILMSTRIP NAV ───────────────────────────────────────────────────────── -->
+<DayNav currentDay={day.day} />
+
+</Base>

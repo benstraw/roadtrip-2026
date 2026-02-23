@@ -1,0 +1,291 @@
+---
+import type { Day } from '../data/days';
+
+interface Props {
+  day: Day;
+  index: number;
+}
+
+const { day, index } = Astro.props;
+const isEven = index % 2 === 0;
+const { theme } = day;
+---
+
+<article
+  class="day-card"
+  data-day={day.day}
+  style={`
+    --card-bg: ${theme.surface};
+    --card-accent: ${theme.accent};
+    --card-text: ${theme.text};
+    --card-muted: ${theme.textMuted};
+    --card-border: ${theme.border};
+    --card-grad-from: ${theme.gradStart};
+    --card-grad-to: ${theme.gradEnd};
+    --card-tilt: ${theme.tilt};
+    animation-delay: ${index * 0.08}s;
+  `}
+>
+  <!-- Route connector dot -->
+  <div class="route-dot" aria-hidden="true">
+    <span class="dot-inner"></span>
+    <span class="dot-ring"></span>
+  </div>
+
+  <a href={`/days/${day.slug}`} class="card-inner" tabindex="0">
+    <!-- Day label -->
+    <div class="card-header">
+      <span class="day-num">Day {day.day}</span>
+      <span class="day-date">{day.dayOfWeek}, {day.date}</span>
+    </div>
+
+    <!-- Route -->
+    <div class="card-route">
+      <span class="city from">{day.fromShort}</span>
+      <span class="arrow-wrap" aria-hidden="true">
+        <svg width="80" height="14" viewBox="0 0 80 14" fill="none">
+          <line x1="0" y1="7" x2="68" y2="7" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <polyline points="60,2 72,7 60,12" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+        <span class="miles">{day.miles} mi</span>
+      </span>
+      <span class="city to">{day.toShort}</span>
+    </div>
+
+    <!-- Tagline -->
+    <p class="tagline">{day.tagline}</p>
+
+    <!-- Highlights -->
+    <ul class="card-highlights">
+      {day.highlights.slice(0, 3).map(h => (
+        <li>{h}</li>
+      ))}
+    </ul>
+
+    <!-- Stats footer -->
+    <div class="card-footer">
+      <span class="stat">
+        <span class="stat-val">{day.miles}</span>
+        <span class="stat-lbl">miles</span>
+      </span>
+      <span class="stat">
+        <span class="stat-val">{day.duration}</span>
+        <span class="stat-lbl">driving</span>
+      </span>
+      <span class="card-cta">
+        Read →
+      </span>
+    </div>
+  </a>
+</article>
+
+<style>
+  .day-card {
+    position: relative;
+    animation: fadeUp 0.55s ease both;
+  }
+
+  .route-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .dot-inner {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--card-accent);
+    box-shadow: 0 0 12px var(--card-accent);
+  }
+
+  .dot-ring {
+    display: block;
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--card-accent);
+    opacity: 0.4;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.4); opacity: 0; }
+  }
+
+  .card-inner {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 3px;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    color: var(--card-text);
+    transform: rotate(var(--card-tilt));
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    position: relative;
+    overflow: hidden;
+
+    /* subtle inner gradient */
+    background-image: linear-gradient(135deg, var(--card-grad-from) 0%, var(--card-grad-to) 100%);
+    background-blend-mode: overlay;
+  }
+
+  /* top-left color tab */
+  .card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--card-accent);
+  }
+
+  .card-inner:hover,
+  .card-inner:focus-visible {
+    transform: rotate(0) translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px var(--card-accent);
+    border-color: var(--card-accent);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+    padding: 0.2em 0.6em;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+    border-radius: 2px;
+  }
+
+  .day-date {
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: var(--card-muted);
+  }
+
+  .card-route {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .city {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    white-space: nowrap;
+  }
+
+  .city.to { color: var(--card-accent); }
+
+  .arrow-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--card-muted);
+    min-width: 60px;
+  }
+
+  .miles {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--card-muted);
+    margin-top: -2px;
+  }
+
+  .tagline {
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: var(--card-muted);
+    font-style: italic;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+
+  .card-highlights {
+    list-style: none;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .card-highlights li {
+    font-size: 0.82rem;
+    color: var(--card-muted);
+    padding-left: 1em;
+    position: relative;
+  }
+
+  .card-highlights li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--card-accent);
+    opacity: 0.6;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--card-border);
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+  }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--card-accent);
+  }
+
+  .stat-lbl {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--card-muted);
+  }
+
+  .card-cta {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--card-accent);
+    transition: letter-spacing 0.2s ease;
+  }
+
+  .card-inner:hover .card-cta {
+    letter-spacing: 0.2em;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: rotate(var(--card-tilt)) translateY(32px); }
+    to   { opacity: 1; transform: rotate(var(--card-tilt)); }
+  }
+</style>

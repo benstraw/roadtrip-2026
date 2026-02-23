@@ -1,0 +1,46 @@
+---
+import '../styles/global.css';
+import type { DayTheme } from '../data/days';
+
+interface Props {
+  title: string;
+  description?: string;
+  theme?: DayTheme;
+  ogImage?: string;
+}
+
+const { title, description = 'A father and son road trip from Philadelphia to California, January–February 2025. Nine days in a red 2008 Toyota Tacoma.', theme, ogImage } = Astro.props;
+
+const cssVars = theme ? `
+  --bg: ${theme.bg};
+  --bg-deep: ${theme.bgDeep};
+  --surface: ${theme.surface};
+  --accent: ${theme.accent};
+  --accent-soft: ${theme.accentSoft};
+  --text: ${theme.text};
+  --text-muted: ${theme.textMuted};
+  --border: ${theme.border};
+` : '';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{title}</title>
+
+  {ogImage && <meta property="og:image" content={ogImage} />}
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body style={cssVars}>
+  <slot />
+</body>
+</html>

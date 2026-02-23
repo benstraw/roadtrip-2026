@@ -1,0 +1,505 @@
+---
+import Base from '../layouts/Base.astro';
+import DayCard from '../components/DayCard.astro';
+import { days, tripTotals } from '../data/days';
+---
+
+<Base title="The Road — Philly to California" description="9 days. 3,908 miles. Philadelphia to California.">
+
+<style>
+  /* ── INDEX-SPECIFIC THEME: aged atlas paper ─── */
+  :root {
+    --bg: #0c1420;
+    --bg-deep: #070d18;
+    --surface: #111e30;
+    --accent: #c8a84a;
+    --accent-soft: #8a7030;
+    --text: #e8e0cc;
+    --text-muted: #8a8068;
+    --border: rgba(200,168,74,0.15);
+  }
+
+  body { background: var(--bg); color: var(--text); }
+
+  /* ─── HERO ─────────────────────────────────────────────────────────────────── */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 6vw, 5rem);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    /* Vintage map grid pattern */
+    background-image:
+      linear-gradient(rgba(200,168,74,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,168,74,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    background-position: center center;
+  }
+
+  /* USA silhouette via gradient blob */
+  .hero-map-blob {
+    position: absolute;
+    right: -5%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 55vw;
+    height: 60vh;
+    background: radial-gradient(ellipse at 40% 50%, rgba(200,168,74,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Animated route line across hero */
+  .hero-route-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 680px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .eyebrow-line {
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 900;
+    line-height: 0.92;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+    display: block;
+  }
+
+  .hero-sub {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    line-height: 1.5;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .hero-stat .val {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .hero-stat .lbl {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 0.75em 1.75em;
+    border-radius: 2px;
+    transition: opacity 0.2s, letter-spacing 0.2s;
+  }
+
+  .hero-cta:hover { opacity: 0.85; letter-spacing: 0.2em; }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    animation: bob 2s ease-in-out infinite;
+  }
+
+  .scroll-indicator svg { width: 18px; height: 18px; }
+
+  @keyframes bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* ─── SECTION HEADER ───────────────────────────────────────────────────────── */
+  .section-header {
+    text-align: center;
+    padding: 5rem 1rem 3rem;
+  }
+
+  .section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .section-header p {
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+
+  /* ─── ROUTE TIMELINE ────────────────────────────────────────────────────────── */
+  .timeline {
+    position: relative;
+    padding: 2rem 0 4rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* The central road line */
+  .timeline-road {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--accent) 0px,
+      var(--accent) 12px,
+      transparent 12px,
+      transparent 20px
+    );
+    opacity: 0.25;
+  }
+
+  .timeline-inner {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0 0;
+    align-items: center;
+  }
+
+  /* Alternate left/right */
+  .timeline-item {
+    display: contents;
+  }
+
+  .timeline-item .card-slot-left {
+    grid-column: 1;
+    padding-right: 2rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .timeline-item .card-slot-right {
+    grid-column: 3;
+    padding-left: 2rem;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .timeline-item .spacer-left {
+    grid-column: 1;
+    padding-right: 2rem;
+  }
+
+  .timeline-item .spacer-right {
+    grid-column: 3;
+    padding-left: 2rem;
+  }
+
+  .timeline-item .center-marker {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .marker-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--bg);
+    transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 0 16px rgba(200,168,74,0.15);
+  }
+
+  .timeline-item:hover .marker-circle {
+    background: var(--accent);
+    color: var(--bg);
+    transform: scale(1.1);
+  }
+
+  .card-slot-left > *,
+  .card-slot-right > * {
+    max-width: 360px;
+    width: 100%;
+  }
+
+  /* ─── FOOTER ───────────────────────────────────────────────────────────────── */
+  .site-footer {
+    text-align: center;
+    padding: 4rem 1rem 2rem;
+    border-top: 1px dashed var(--border);
+    color: var(--text-muted);
+  }
+
+  .site-footer .hand {
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .site-footer small {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
+  }
+
+  /* ─── RESPONSIVE ───────────────────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .timeline-road { left: 1.5rem; }
+    .timeline-inner {
+      grid-template-columns: 40px 1fr;
+    }
+    .timeline-item .center-marker { grid-column: 1; }
+    .timeline-item .card-slot-left,
+    .timeline-item .card-slot-right {
+      grid-column: 2;
+      padding: 0 0 0 1rem;
+      justify-content: flex-start;
+    }
+    .timeline-item .spacer-left,
+    .timeline-item .spacer-right { display: none; }
+    .marker-circle { width: 28px; height: 28px; font-size: 0.55rem; }
+  }
+</style>
+
+<!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-map-blob" aria-hidden="true"></div>
+
+  <!-- Animated SVG route line across the hero background -->
+  <svg class="hero-route-svg" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+    <path
+      d="M 100 350 C 200 340, 280 360, 380 320 C 450 290, 500 310, 580 280 C 650 255, 720 270, 800 240 C 870 215, 920 230, 1000 200 C 1050 185, 1100 195, 1150 180"
+      stroke="rgba(200,168,74,0.12)"
+      stroke-width="2"
+      fill="none"
+      stroke-dasharray="10 8"
+    />
+    <!-- State dots along route -->
+    {[
+      [100, 350], [220, 340], [380, 320], [500, 295], [620, 270],
+      [740, 248], [830, 235], [950, 210], [1100, 188]
+    ].map(([x, y], i) => (
+      <circle cx={x} cy={y} r="3" fill="rgba(200,168,74,0.3)" />
+    ))}
+  </svg>
+
+  <div class="hero-content animate-fade-up">
+    <p class="hero-eyebrow">
+      <span class="eyebrow-line"></span>
+      Father &amp; Son — Jan 30 – Feb 7, 2025
+    </p>
+    <h1 class="hero-title">
+      The<br/>
+      <em>Road</em>
+    </h1>
+    <p class="hero-sub">
+      Philadelphia to California.<br/>
+      A father, a son, a red Tacoma.<br/>
+      Nine days. Made it.
+    </p>
+
+    <div class="hero-stats stagger">
+      <div class="hero-stat">
+        <span class="val">{tripTotals.miles.toLocaleString()}</span>
+        <span class="lbl">total miles</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val">{tripTotals.days}</span>
+        <span class="lbl">days</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val">{tripTotals.states.length}</span>
+        <span class="lbl">states</span>
+      </div>
+    </div>
+
+    <a href="#days" class="hero-cta">
+      View the Journey
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12,5 19,12 12,19"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="scroll-indicator" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <polyline points="6,9 12,15 18,9"/>
+    </svg>
+    scroll
+  </div>
+</section>
+
+<!-- ─── DAY TIMELINE ──────────────────────────────────────────────────────── -->
+<main id="days">
+  <div class="section-header">
+    <h2>Nine Days</h2>
+    <p>Philly · Charlotte · Montgomery · Jackson · Austin · Terlingua · Big Bend · Tucson · California</p>
+  </div>
+
+  <div class="container">
+    <div class="timeline">
+      <div class="timeline-road" aria-hidden="true"></div>
+      <div class="timeline-inner" role="list">
+        {days.map((day, i) => {
+          const isLeft = i % 2 === 0;
+          return (
+            <div class="timeline-item" role="listitem">
+              {isLeft ? (
+                <>
+                  <div class="card-slot-left">
+                    <DayCard day={day} index={i} />
+                  </div>
+                  <div class="center-marker">
+                    <div class="marker-circle">{day.day}</div>
+                  </div>
+                  <div class="spacer-right"></div>
+                </>
+              ) : (
+                <>
+                  <div class="spacer-left"></div>
+                  <div class="center-marker">
+                    <div class="marker-circle">{day.day}</div>
+                  </div>
+                  <div class="card-slot-right">
+                    <DayCard day={day} index={i} />
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ─── FOOTER ────────────────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <span class="hand">Made it home. Eventually.</span>
+  <small>Philadelphia → California &nbsp;·&nbsp; January 30 – February 7, 2025</small>
+</footer>
+
+<script>
+  // Intersection observer for scroll-reveal on day cards
+  const cards = document.querySelectorAll('.day-card');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+  );
+  cards.forEach(card => {
+    card.classList.add('will-reveal');
+    observer.observe(card);
+  });
+</script>
+
+<style is:global>
+  .will-reveal .card-inner {
+    opacity: 0;
+    transform: rotate(var(--card-tilt)) translateY(28px);
+  }
+  .revealed .card-inner {
+    opacity: 1;
+    transform: rotate(var(--card-tilt)) translateY(0);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .revealed .card-inner:hover {
+    transform: rotate(0) translateY(-4px);
+  }
+  /* Also reveal the route dot */
+  .will-reveal .route-dot { opacity: 0; transition: opacity 0.4s 0.3s ease; }
+  .revealed .route-dot { opacity: 1; }
+</style>
+
+</Base>
