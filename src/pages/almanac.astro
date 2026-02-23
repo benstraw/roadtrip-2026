@@ -1,0 +1,1077 @@
+---
+import Base from '../layouts/Base.astro';
+import { days, tripTotals } from '../data/days';
+import {
+  stateData,
+  highways,
+  elevationWaypoints,
+  geography,
+  townsCatalog,
+} from '../data/almanac';
+
+// Group towns by day for the catalog section
+const townsByDay = days.map(d => ({
+  day: d,
+  towns: townsCatalog.filter(t => t.day === d.day),
+}));
+
+// Largest state bar width relative to TX (the max)
+const maxStateMiles = Math.max(...stateData.map(s => s.approxMiles));
+
+// Elevation min/max for the bar chart
+const minElev = Math.min(...elevationWaypoints.map(e => e.elevFt));
+const maxElev = Math.max(...elevationWaypoints.map(e => e.elevFt));
+const elevRange = maxElev - minElev;
+---
+
+<Base
+  title="The Almanac — The Road, Philly to California"
+  description="Every state, highway, city, canyon, river, and desert. The full record of 3,753 miles."
+>
+
+<style>
+  /* ── ALMANAC THEME: atlas gold ─── */
+  :root {
+    --bg: #0c1420;
+    --bg-deep: #070d18;
+    --surface: #111e30;
+    --accent: #c8a84a;
+    --accent-soft: #8a7030;
+    --text: #e8e0cc;
+    --text-muted: #8a8068;
+    --border: rgba(200,168,74,0.15);
+  }
+
+  body { background: var(--bg); color: var(--text); }
+
+  /* ── GRID BACKGROUND ── */
+  .page-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,168,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,168,74,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: clamp(5rem, 12vw, 9rem) clamp(1.5rem, 6vw, 5rem) clamp(3rem, 6vw, 5rem);
+    position: relative;
+    z-index: 1;
+    border-bottom: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .back-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent); }
+  .back-link svg { width: 12px; height: 12px; }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .eyebrow-line { width: 40px; height: 1px; background: var(--accent); opacity: 0.4; }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 0.92;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .hero-title em { font-style: italic; color: var(--accent); }
+
+  .hero-sub {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+    line-height: 1.5;
+  }
+
+  .hero-stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .hero-stat .val {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .hero-stat .lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .gpx-note {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: rgba(200,168,74,0.06);
+    border-left: 2px solid var(--accent-soft);
+    font-family: 'Caveat', cursive;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .gpx-note strong { color: var(--accent); }
+
+  /* ── MAIN LAYOUT ── */
+  .almanac-main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(1.5rem, 6vw, 5rem) 6rem;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 4rem 0 0;
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+  }
+  .section:first-child { margin-top: 0; border-top: none; padding-top: 3.5rem; }
+
+  .section-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .section-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .section-desc {
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+  }
+
+  /* ── STATE CARDS ── */
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .state-card {
+    background: var(--bg);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .state-card:hover { background: var(--surface); }
+
+  .state-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .state-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .state-abbrev {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    background: rgba(200,168,74,0.1);
+    padding: 0.15em 0.5em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .state-miles-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+  }
+
+  .state-miles-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .state-miles-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+  }
+
+  .state-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    margin-bottom: 0.75rem;
+  }
+
+  .state-towns {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .state-days {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    display: flex;
+    gap: 3px;
+  }
+
+  .day-pip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+  }
+
+  /* ── HIGHWAY TABLE ── */
+  .highway-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+
+  .highway-row {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 1.5rem;
+    align-items: start;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .highway-row:last-child { border-bottom: none; }
+  .highway-row:hover { background: var(--surface); }
+
+  .highway-route {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .highway-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+  }
+
+  .highway-body .highway-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .highway-body .highway-states {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+  }
+
+  .highway-days {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  /* ── ELEVATION ── */
+  .elevation-chart {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .elevation-points {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+
+  .elev-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 120px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .elev-row:last-child { border-bottom: none; }
+  .elev-row:hover { background: var(--surface); }
+  .elev-row.highlight { background: rgba(200,168,74,0.07); }
+  .elev-row.below-sea { background: rgba(74,138,200,0.06); }
+
+  .elev-label {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .elev-note-small {
+    font-family: 'Caveat', cursive;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+  }
+
+  .elev-ft {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-align: right;
+  }
+  .elev-row.highlight .elev-ft { color: #e8c04a; font-weight: 700; }
+  .elev-row.below-sea .elev-ft { color: #7ebcd6; }
+
+  .elev-bar-wrap {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .elev-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+  .elev-row.highlight .elev-bar { background: #e8c04a; }
+  .elev-row.below-sea .elev-bar { background: #7ebcd6; }
+
+  .elev-day {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+  }
+
+  /* ── GEOGRAPHY ── */
+  .geo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .geo-card {
+    background: var(--bg);
+    padding: 1.25rem 1.5rem;
+    transition: background 0.15s;
+  }
+  .geo-card:hover { background: var(--surface); }
+
+  .geo-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .geo-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .geo-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .geo-states {
+    margin-top: 0.6rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  /* ── TOWNS CATALOG ── */
+  .towns-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 2rem;
+    margin-top: 0;
+  }
+
+  .day-towns-group {
+    border-left: 2px solid var(--accent-soft);
+    padding-left: 1rem;
+  }
+
+  .day-towns-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .day-route-line {
+    font-family: 'Caveat', cursive;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  .town-item {
+    margin-bottom: 0.6rem;
+  }
+
+  .town-name {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .town-role {
+    font-size: 0.55rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    padding: 0.1em 0.4em;
+    border-radius: 2px;
+    background: rgba(200,168,74,0.1);
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .town-role.overnight { color: var(--accent); background: rgba(200,168,74,0.15); }
+
+  .town-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+    line-height: 1.35;
+  }
+
+  /* ── TRIP STATS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .stat-block {
+    background: var(--bg);
+    padding: 1.5rem;
+    transition: background 0.15s;
+  }
+  .stat-block:hover { background: var(--surface); }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    line-height: 1.35;
+  }
+
+  /* ── DAY TABLE ── */
+  .day-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+  }
+
+  .day-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-deep);
+    white-space: nowrap;
+  }
+
+  .day-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .day-table tr:last-child td { border-bottom: none; }
+  .day-table tr:hover td { background: var(--surface); }
+
+  .td-day {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .td-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .td-route {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .td-route em { color: var(--accent); font-style: normal; }
+
+  .td-miles {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .td-duration {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .td-tagline {
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+  }
+
+  /* ── FOOTER ── */
+  .almanac-footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2.5rem clamp(1.5rem, 6vw, 5rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .footer-hand {
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: var(--text-muted);
+  }
+
+  .footer-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .highway-row {
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+    }
+    .highway-days { text-align: left; }
+    .elev-row {
+      grid-template-columns: 1fr 60px;
+    }
+    .elev-bar-wrap { display: none; }
+    .day-table { font-size: 0.8rem; }
+    .day-table th:nth-child(5),
+    .day-table td:nth-child(5) { display: none; }
+  }
+</style>
+
+<div class="page-bg" aria-hidden="true"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <a href="/" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="15,18 9,12 15,6"/>
+    </svg>
+    The Road
+  </a>
+
+  <p class="hero-eyebrow">
+    <span class="eyebrow-line"></span>
+    Philadelphia to California · Jan 30 – Feb 7, 2025
+  </p>
+
+  <h1 class="hero-title">
+    The<br/>
+    <em>Almanac</em>
+  </h1>
+
+  <p class="hero-sub">
+    Every state. Every highway. Every city, canyon, river, and desert.<br/>
+    The full record of the red Tacoma's crossing.
+  </p>
+
+  <div class="hero-stats-row">
+    <div class="hero-stat">
+      <span class="val">{tripTotals.odometerMiles.toLocaleString()}</span>
+      <span class="lbl">odometer miles</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.days}</span>
+      <span class="lbl">days</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.states.length}</span>
+      <span class="lbl">states</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.totalMeals}</span>
+      <span class="lbl">meals logged</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.totalStops}</span>
+      <span class="lbl">stops</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.highPointFt.toLocaleString()}</span>
+      <span class="lbl">high point, ft</span>
+    </div>
+    <div class="hero-stat">
+      <span class="val">{tripTotals.totalPhotos}</span>
+      <span class="lbl">photos</span>
+    </div>
+  </div>
+
+  <p class="gpx-note">
+    <strong>Note on data.</strong> No GPS track was recorded during the trip.
+    State distances below are estimated from the known route corridors —
+    accurate to within ±5% on individual segments, summing to the
+    computed route total of {tripTotals.miles.toLocaleString()} miles.
+    The odometer-verified total of {tripTotals.odometerMiles.toLocaleString()} miles
+    includes city driving, Big Bend park roads, the Airbnb dirt road, and other
+    miles not captured in point-to-point estimates. Elevation data is established
+    survey elevation for each waypoint, not GPS-recorded.
+  </p>
+</section>
+
+<main class="almanac-main">
+
+  <!-- ── SECTION 1: STATES ──────────────────────────────────────────────── -->
+  <section class="section" id="states">
+    <div class="section-heading">
+      <span class="section-label">01</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">States of the Union</h2>
+    <p class="section-desc">13 states. Pennsylvania to California. ~3,406 route miles mapped across the continent.</p>
+
+    <div class="states-grid">
+      {stateData.map(s => {
+        const pct = (s.approxMiles / maxStateMiles) * 100;
+        return (
+          <div class="state-card">
+            <div class="state-header">
+              <div>
+                <div class="state-name">{s.name}</div>
+                <div class="state-miles-val">~{s.approxMiles.toLocaleString()} mi</div>
+              </div>
+              <div class="state-abbrev">{s.abbrev}</div>
+            </div>
+
+            <div class="state-miles-bar">
+              <div class="state-miles-fill" style={`width: ${pct}%`}></div>
+            </div>
+
+            <p class="state-note">{s.note}</p>
+
+            <div class="state-towns">
+              {s.towns.slice(0, 5).join(' · ')}
+              {s.towns.length > 5 ? ` · +${s.towns.length - 5}` : ''}
+            </div>
+
+            <div class="state-days">
+              {s.days.map(() => <div class="day-pip"></div>)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: HIGHWAYS ──────────────────────────────────────────── -->
+  <section class="section" id="highways">
+    <div class="section-heading">
+      <span class="section-label">02</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">Roads & Highways</h2>
+    <p class="section-desc">Interstates, two-laners, scenic byways. The specific roads that got us there.</p>
+
+    <div class="highway-list">
+      {highways.map(h => (
+        <div class="highway-row">
+          <div>
+            <div class="highway-route">{h.route}</div>
+            <div class="highway-name">{h.name}</div>
+          </div>
+          <div class="highway-body">
+            <div class="highway-note">{h.note}</div>
+            <div class="highway-states">{h.states.join(' · ')}</div>
+          </div>
+          <div class="highway-days">
+            Day{h.days.length > 1 ? 's' : ''} {h.days.join(', ')}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: ELEVATION ─────────────────────────────────────────── -->
+  <section class="section" id="elevation">
+    <div class="section-heading">
+      <span class="section-label">03</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">Elevation</h2>
+    <p class="section-desc">
+      Sea level in Philadelphia. 5,600 ft at the Window Trail. Back to sea level in Santa Monica.
+      The land rose through the middle of the country and fell back into the Pacific.
+    </p>
+
+    <div class="elevation-points">
+      {elevationWaypoints.map(e => {
+        const isHighPoint = e.note === 'TRIP HIGH POINT';
+        const isBelowSea = e.elevFt < 0;
+        // Bar: relative to range, abs value for below-sea
+        const barPct = isBelowSea
+          ? (Math.abs(e.elevFt) / maxElev) * 60
+          : ((e.elevFt - 0) / maxElev) * 100;
+        return (
+          <div class={`elev-row${isHighPoint ? ' highlight' : ''}${isBelowSea ? ' below-sea' : ''}`}>
+            <div>
+              <div class="elev-label">{e.label}</div>
+              {e.note && e.note !== 'TRIP HIGH POINT' && (
+                <div class="elev-note-small">{e.note}</div>
+              )}
+              {isHighPoint && (
+                <div class="elev-note-small">Trip high point — Window Trail, Chisos Mountains</div>
+              )}
+              <div class="elev-day">Day {e.day}</div>
+            </div>
+            <div class="elev-ft">
+              {e.elevFt < 0 ? `−${Math.abs(e.elevFt).toLocaleString()}` : e.elevFt.toLocaleString()} ft
+            </div>
+            <div class="elev-bar-wrap">
+              <div class="elev-bar" style={`width: ${Math.min(barPct, 100)}%`}></div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ── SECTION 4: GEOGRAPHY ──────────────────────────────────────────── -->
+  <section class="section" id="geography">
+    <div class="section-heading">
+      <span class="section-label">04</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">Geography</h2>
+    <p class="section-desc">Rivers crossed, mountains passed through, deserts driven, canyons entered.</p>
+
+    <div class="geo-grid">
+      {geography.map(g => (
+        <div class="geo-card">
+          <div class="geo-type">{g.type}</div>
+          <div class="geo-name">{g.name}</div>
+          <div class="geo-note">{g.note}</div>
+          <div class="geo-states">{g.states.join(' · ')} &nbsp;·&nbsp; Day{g.days.length > 1 ? 's' : ''} {g.days.join(', ')}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── SECTION 5: CITIES & TOWNS ─────────────────────────────────────── -->
+  <section class="section" id="towns">
+    <div class="section-heading">
+      <span class="section-label">05</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">Cities & Towns</h2>
+    <p class="section-desc">Every place the truck stopped, passed through, or stayed. In order.</p>
+
+    <div class="towns-section">
+      {townsByDay.map(({ day, towns }) => (
+        <div class="day-towns-group">
+          <div class="day-towns-header">
+            <span class="day-num">Day {day.day}</span>
+            <span class="day-route-line">{day.fromShort} → {day.toShort}</span>
+          </div>
+          {towns.map(t => (
+            <div class="town-item">
+              <div class="town-name">
+                {t.name}
+                <span class={`town-role${t.role === 'overnight' ? ' overnight' : ''}`}>{t.role}</span>
+              </div>
+              {t.note && <div class="town-note">{t.note}</div>}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── SECTION 6: TRIP STATISTICS ─────────────────────────────────────── -->
+  <section class="section" id="stats">
+    <div class="section-heading">
+      <span class="section-label">06</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">Trip Statistics</h2>
+    <p class="section-desc">The numbers behind the nine days.</p>
+
+    <div class="stats-grid">
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.odometerMiles.toLocaleString()}</div>
+        <div class="stat-label">Total Miles</div>
+        <div class="stat-note">Odometer-verified from Day 9 photo. Includes all park roads, city driving, and side trips.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.days}</div>
+        <div class="stat-label">Days</div>
+        <div class="stat-note">Jan 30 – Feb 7. Friday to Saturday. Nine mornings in the truck.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.states.length}</div>
+        <div class="stat-label">States</div>
+        <div class="stat-note">PA · MD · VA · NC · SC · GA · AL · MS · LA · TX · NM · AZ · CA</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.totalMeals}</div>
+        <div class="stat-label">Meals Logged</div>
+        <div class="stat-note">Breakfasts, lunches, dinners, and a few gas station snacks.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.totalStops}</div>
+        <div class="stat-label">Named Stops</div>
+        <div class="stat-note">Documented waypoints. Doesn't count every pullout on Hwy 170.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.highPointFt.toLocaleString()}</div>
+        <div class="stat-label">High Point, ft</div>
+        <div class="stat-note">{tripTotals.highPointLabel}. Day 7. Five-mile hike to the pour-off.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">−227</div>
+        <div class="stat-label">Low Point, ft</div>
+        <div class="stat-note">Salton Sea, CA. Below sea level. Day 9. Flat and strange.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">3</div>
+        <div class="stat-label">Nights in Terlingua</div>
+        <div class="stat-note">Ghost town that didn't finish dying. Three nights at the Starlight. Stars every night.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">1,380</div>
+        <div class="stat-label">Texas Miles</div>
+        <div class="stat-note">Largest share of the trip by state — 40% of the route total. Five driving days.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">619</div>
+        <div class="stat-label">Longest Day, mi</div>
+        <div class="stat-note">Day 8: Big Bend to Tucson. Big Bend → Hwy 170 → Marfa → El Paso → Las Cruces → Tucson.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">28</div>
+        <div class="stat-label">Shortest Day, mi</div>
+        <div class="stat-note">Day 6: Terlingua to Big Bend. A short drive into an all-day exploration.</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">{tripTotals.totalPhotos}</div>
+        <div class="stat-label">Photos</div>
+        <div class="stat-note">Plus {tripTotals.totalVideos} videos. Nine days of the red Tacoma and everything around it.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 7: DAY-BY-DAY SUMMARY ─────────────────────────────────── -->
+  <section class="section" id="route">
+    <div class="section-heading">
+      <span class="section-label">07</span>
+      <div class="section-rule"></div>
+    </div>
+    <h2 class="section-title">The Route</h2>
+    <p class="section-desc">Day-by-day. Nine legs. One truck.</p>
+
+    <div style="overflow-x: auto;">
+      <table class="day-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Date</th>
+            <th>Route</th>
+            <th>Miles</th>
+            <th>Time</th>
+            <th>Tagline</th>
+          </tr>
+        </thead>
+        <tbody>
+          {days.map(d => (
+            <tr>
+              <td>
+                <a href={`/days/${d.slug}`} class="td-day">Day {d.day}</a>
+              </td>
+              <td class="td-date">{d.dayOfWeek}<br/>{d.date}</td>
+              <td class="td-route">{d.from} <em>→</em> {d.to}</td>
+              <td class="td-miles">{d.miles.toLocaleString()}</td>
+              <td class="td-duration">{d.duration}</td>
+              <td class="td-tagline">{d.tagline}</td>
+            </tr>
+          ))}
+          <tr style="background: var(--bg-deep)">
+            <td colspan="3" style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); padding: 0.85rem 1rem;">
+              Route total (point-to-point estimates)
+            </td>
+            <td class="td-miles" style="color: var(--accent); font-weight: 700;">
+              {tripTotals.miles.toLocaleString()}
+            </td>
+            <td colspan="2" style="font-family: 'Caveat', cursive; font-size: 0.8rem; color: var(--text-muted); padding: 0.85rem 1rem;">
+              {tripTotals.odometerMiles.toLocaleString()} mi odometer-verified
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="almanac-footer">
+  <span class="footer-hand">Made it home. Every mile of it.</span>
+  <span class="footer-meta">Philadelphia → California &nbsp;·&nbsp; Jan 30 – Feb 7, 2025</span>
+</footer>
+
+</Base>

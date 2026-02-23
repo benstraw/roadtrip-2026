@@ -4,7 +4,7 @@ import DayCard from '../components/DayCard.astro';
 import { days, tripTotals } from '../data/days';
 ---
 
-<Base title="The Road — Philly to California" description="9 days. 3,908 miles. Philadelphia to California.">
+<Base title="The Road — Philly to California" description="9 days. 3,753 miles. Philadelphia to California.">
 
 <style>
   /* ── INDEX-SPECIFIC THEME: aged atlas paper ─── */
@@ -384,7 +384,7 @@ import { days, tripTotals } from '../data/days';
 
     <div class="hero-stats stagger">
       <div class="hero-stat">
-        <span class="val">{tripTotals.miles.toLocaleString()}</span>
+        <span class="val">{tripTotals.odometerMiles.toLocaleString()}</span>
         <span class="lbl">total miles</span>
       </div>
       <div class="hero-stat">
@@ -462,6 +462,7 @@ import { days, tripTotals } from '../data/days';
 <footer class="site-footer">
   <span class="hand">Made it home. Eventually.</span>
   <small>Philadelphia → California &nbsp;·&nbsp; January 30 – February 7, 2025</small>
+  <small><a href="/almanac" style="color: var(--text-muted); text-decoration: none; border-bottom: 1px solid rgba(200,168,74,0.3); padding-bottom: 1px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">The Almanac →</a></small>
 </footer>
 
 <script>

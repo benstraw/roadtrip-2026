@@ -744,8 +744,17 @@ export const days: Day[] = [
 
 export const tripTotals = {
   miles: days.reduce((acc, d) => acc + d.miles, 0),
+  // Odometer-verified total from Day 9 photo — includes city driving, park roads, side trips
+  odometerMiles: 3753,
   days: days.length,
   states: ['PA', 'MD', 'VA', 'NC', 'SC', 'GA', 'AL', 'MS', 'LA', 'TX', 'NM', 'AZ', 'CA'],
+  totalMeals: days.reduce((acc, d) => acc + d.meals.length, 0),
+  totalStops: days.reduce((acc, d) => acc + d.stops.length, 0),
+  totalPhotos: days.reduce((acc, d) => acc + d.galleryImages.filter(g => !g.video).length, 0),
+  totalVideos: days.reduce((acc, d) => acc + d.galleryImages.filter(g => g.video).length, 0),
+  // Highest elevation reached: Window Trail, Chisos Mountains, Big Bend NP
+  highPointFt: 5600,
+  highPointLabel: 'Window Trail, Chisos Mts.',
 };
 
 // ─── PHOTO GUIDE ─────────────────────────────────────────────────────────────
