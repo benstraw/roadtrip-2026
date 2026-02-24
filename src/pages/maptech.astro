@@ -1,15 +1,9 @@
 ---
 import MapNav from '../components/MapNav.astro';
-import Analytics from '@vercel/analytics/astro';
+import MapBase from '../layouts/MapBase.astro';
 ---
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tech — The Road</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+<MapBase title="Tech — The Road" description="How the mapping was built: library choices, tile providers, GPX pipeline, and D3 visualization.">
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #05090f; --bg-deep: #030609; --surface: #0a1018; --surface2: #0d141e;
@@ -214,8 +208,6 @@ import Analytics from '@vercel/analytics/astro';
       .decision-table td:first-child { white-space: normal; }
     }
   </style>
-</head>
-<body>
 
 <header class="page-header">
   <h1>Tech</h1>
@@ -546,6 +538,4 @@ import Analytics from '@vercel/analytics/astro';
   </div>
 
 </div><!-- /tech-body -->
-<Analytics />
-</body>
-</html>
+</MapBase>

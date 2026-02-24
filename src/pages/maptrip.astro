@@ -1,19 +1,11 @@
 ---
 import { days } from '../data/days';
 import MapNav from '../components/MapNav.astro';
-import Analytics from '@vercel/analytics/astro';
+import MapBase from '../layouts/MapBase.astro';
 const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
-
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Full Trip Map — The Road</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+<MapBase title="Full Trip Map — The Road" leaflet>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
@@ -94,8 +86,6 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
       #map-trip { min-height: 400px; }
     }
   </style>
-</head>
-<body>
 
 <header class="page-header">
   <h1>Philadelphia → California</h1>
@@ -243,6 +233,4 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     if (el) { el.classList.remove('active'); el.style.borderLeftColor = 'transparent'; }
   }
 </script>
-<Analytics />
-</body>
-</html>
+</MapBase>

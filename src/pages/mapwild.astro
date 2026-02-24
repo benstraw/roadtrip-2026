@@ -1,16 +1,9 @@
 ---
 import MapNav from '../components/MapNav.astro';
-import Analytics from '@vercel/analytics/astro';
+import MapBase from '../layouts/MapBase.astro';
 ---
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Experiments — The Road</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+<MapBase title="Experiments — The Road" leaflet>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
@@ -89,8 +82,6 @@ import Analytics from '@vercel/analytics/astro';
 
     @media (max-width: 600px) { .map-container { height: 350px; } }
   </style>
-</head>
-<body>
 
 <header class="page-header">
   <h1>Experiments</h1>
@@ -494,6 +485,4 @@ async function parseGPX(url) {
 })();
 
 </script>
-<Analytics />
-</body>
-</html>
+</MapBase>

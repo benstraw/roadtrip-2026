@@ -1,21 +1,11 @@
 ---
 import { days } from '../data/days';
 import MapNav from '../components/MapNav.astro';
-import Analytics from '@vercel/analytics/astro';
+import MapBase from '../layouts/MapBase.astro';
 const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
-
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mapbook — The Road</title>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <style>
+<MapBase title="Tile Styles — The Road" leaflet>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -34,8 +24,6 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
       font-family: 'Raleway', system-ui, sans-serif;
       min-height: 100vh;
     }
-
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
 
     /* ─── HEADER ──────────────────────────────────────────────────────────────── */
     .page-header {
@@ -232,8 +220,6 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
       .experiment-desc { display: none; }
     }
   </style>
-</head>
-<body>
 
 <!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
 <header class="page-header">
@@ -547,6 +533,4 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     gpxLayer.addTo(map);
   });
 </script>
-<Analytics />
-</body>
-</html>
+</MapBase>

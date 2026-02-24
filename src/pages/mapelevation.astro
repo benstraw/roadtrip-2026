@@ -1,16 +1,9 @@
 ---
 import MapNav from '../components/MapNav.astro';
-import Analytics from '@vercel/analytics/astro';
+import MapBase from '../layouts/MapBase.astro';
 ---
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Elevation — The Road</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+<MapBase title="Elevation — The Road" leaflet>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
@@ -102,8 +95,6 @@ import Analytics from '@vercel/analytics/astro';
       .profile-side { overflow: visible; }
     }
   </style>
-</head>
-<body>
 
 <header class="page-header">
   <h1>Elevation</h1>
@@ -439,6 +430,4 @@ function renderProfile(d, downsampled, fullSeries) {
 }
 
 </script>
-<Analytics />
-</body>
-</html>
+</MapBase>
