@@ -46,6 +46,7 @@ async function convertToWebP(srcPath, name) {
 
   try {
     await sharp(srcPath, { failOn: 'none' })
+      .rotate()                                         // bake in EXIF orientation before resize
       .resize({ width: MAX_WIDTH, withoutEnlargement: true })
       .webp({ quality: QUALITY })
       .toFile(destPath);
