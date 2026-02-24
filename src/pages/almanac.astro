@@ -812,7 +812,7 @@ const elevRange = maxElev - minElev;
       <div class="section-rule"></div>
     </div>
     <h2 class="section-title">States of the Union</h2>
-    <p class="section-desc">13 states. Pennsylvania to California. ~3,406 route miles mapped across the continent.</p>
+    <p class="section-desc">{tripTotals.states.length} states. Pennsylvania to California. ~3,406 route miles mapped across the continent.</p>
 
     <div class="states-grid">
       {stateData.map(s => {
@@ -993,7 +993,7 @@ const elevRange = maxElev - minElev;
       <div class="stat-block">
         <div class="stat-val">{tripTotals.states.length}</div>
         <div class="stat-label">States</div>
-        <div class="stat-note">PA · MD · VA · NC · SC · GA · AL · MS · LA · TX · NM · AZ · CA</div>
+        <div class="stat-note">{tripTotals.states.join(' · ')}</div>
       </div>
       <div class="stat-block">
         <div class="stat-val">{tripTotals.totalMeals}</div>
