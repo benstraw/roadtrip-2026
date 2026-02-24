@@ -28,6 +28,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   title={`Day ${day.day} — ${day.from} to ${day.to}`}
   description={`Day ${day.day}: ${day.tagline}`}
   theme={theme}
+  ogImage={`/og/day-${day.day}.png`}
 >
 {day.gpxUrl && <link slot="head" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />}
 

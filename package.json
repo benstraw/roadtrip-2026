@@ -8,7 +8,9 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@vercel/analytics": "^1.6.1",
-    "astro": "^4.16.0"
+    "astro": "^4.16.0",
+    "satori": "^0.19.2"
   }
 }

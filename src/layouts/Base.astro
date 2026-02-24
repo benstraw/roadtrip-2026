@@ -12,6 +12,8 @@ interface Props {
 
 const { title, description = 'A father and son road trip from Philadelphia to California, January–February 2025. Nine days in a red 2008 Toyota Tacoma.', theme, ogImage } = Astro.props;
 
+const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : undefined;
+
 const cssVars = theme ? `
   --bg: ${theme.bg};
   --bg-deep: ${theme.bgDeep};
@@ -32,10 +34,14 @@ const cssVars = theme ? `
   <meta name="description" content={description} />
   <title>{title}</title>
 
-  {ogImage && <meta property="og:image" content={ogImage} />}
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
+  {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+  {ogImageUrl && <meta property="og:image:width" content="1200" />}
+  {ogImageUrl && <meta property="og:image:height" content="630" />}
+  <meta name="twitter:card" content="summary_large_image" />
+  {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
 
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
