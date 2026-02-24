@@ -12,5 +12,8 @@
     "@vercel/analytics": "^1.6.1",
     "astro": "^4.16.0",
     "satori": "^0.19.2"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }
