@@ -25,7 +25,7 @@ const elevRange = maxElev - minElev;
 ---
 
 <Base
-  title="The Almanac — The Road, Philly to California"
+  title="The Almanac — The Road, Philly to Los Angeles"
   description="Every state, highway, city, canyon, river, and desert. The full record of 3,753 miles."
 >
 
@@ -638,6 +638,13 @@ const elevRange = maxElev - minElev;
     font-size: 0.82rem;
     color: var(--text);
   }
+  .td-route a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(200,168,74,0.25);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .td-route a:hover { color: var(--accent); border-color: var(--accent); }
   .td-route em { color: var(--accent); font-style: normal; }
 
   .td-miles {
@@ -747,7 +754,7 @@ const elevRange = maxElev - minElev;
 
   <p class="hero-eyebrow">
     <span class="eyebrow-line"></span>
-    Philadelphia to California · Jan 30 – Feb 7, 2025
+    Philadelphia to Los Angeles · Jan 30 – Feb 7, 2025
   </p>
 
   <h1 class="hero-title">
@@ -809,7 +816,7 @@ const elevRange = maxElev - minElev;
       <div class="section-rule"></div>
     </div>
     <h2 class="section-title">States of the Union</h2>
-    <p class="section-desc">{tripTotals.states.length} states. Pennsylvania to California. 3,571 GPS miles mapped across the continent.</p>
+    <p class="section-desc">{tripTotals.states.length} states. Pennsylvania to Los Angeles. 3,571 GPS miles mapped across the continent.</p>
 
     <div class="states-grid">
       {stateData.map(s => {
@@ -880,7 +887,7 @@ const elevRange = maxElev - minElev;
     </div>
     <h2 class="section-title">Elevation</h2>
     <p class="section-desc">
-      Sea level in Philadelphia. 5,784 ft in the Chisos Basin. Back to sea level in Santa Monica.
+      Sea level in Philadelphia. 5,784 ft in the Chisos Basin. Back to sea level in Los Angeles.
       The land rose through the middle of the country and fell back into the Pacific.
     </p>
 
@@ -1068,7 +1075,7 @@ const elevRange = maxElev - minElev;
                 <a href={`/days/${d.slug}`} class="td-day">Day {d.day}</a>
               </td>
               <td class="td-date">{d.dayOfWeek}<br/>{d.date}</td>
-              <td class="td-route">{d.from} <em>→</em> {d.to}</td>
+              <td class="td-route"><a href={`/days/${d.slug}`}>{d.from} <em>→</em> {d.to}</a></td>
               <td class="td-miles">{d.miles.toLocaleString()}</td>
               <td class="td-duration">{d.duration}</td>
               <td class="td-tagline">{d.tagline}</td>
@@ -1089,7 +1096,7 @@ const elevRange = maxElev - minElev;
 <!-- FOOTER -->
 <footer class="almanac-footer">
   <span class="footer-hand">Made it home. Every mile of it.</span>
-  <span class="footer-meta">Philadelphia → California &nbsp;·&nbsp; Jan 30 – Feb 7, 2025</span>
+  <span class="footer-meta">Philadelphia → Los Angeles &nbsp;·&nbsp; Jan 30 – Feb 7, 2025</span>
 </footer>
 
 </Base>
