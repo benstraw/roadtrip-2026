@@ -1,0 +1,71 @@
+---
+interface Item {
+  slug: string;
+  label: string;
+}
+
+interface Props {
+  current: string;
+}
+
+const { current } = Astro.props;
+
+const items: Item[] = [
+  { slug: '/maptrip', label: 'Full Trip' },
+  { slug: '/mapelevation', label: 'Elevation' },
+  { slug: '/mapridge', label: 'The Ridge' },
+  { slug: '/tilestyles', label: 'Tile Styles' },
+  { slug: '/mapexp-speed', label: 'Speed Painting' },
+  { slug: '/mapexp-profile', label: 'The Profile' },
+  { slug: '/mapexp-replay', label: 'Replay' },
+];
+
+const idx = items.findIndex(i => i.slug === current);
+const prev = idx > 0 ? items[idx - 1] : null;
+const next = idx >= 0 && idx < items.length - 1 ? items[idx + 1] : null;
+---
+
+<nav class="exp-pager" aria-label="Experiment navigation">
+  {prev ? <a class="exp-link prev" href={prev.slug}>← {prev.label}</a> : <span class="exp-link disabled">← Start</span>}
+  <a class="exp-link center" href="/maptech">All Experiments</a>
+  {next ? <a class="exp-link next" href={next.slug}>{next.label} →</a> : <span class="exp-link disabled">End →</span>}
+</nav>
+
+<style>
+  .exp-pager {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .exp-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #c8a84a;
+    border: 1px solid rgba(200, 168, 74, 0.35);
+    background: rgba(12, 20, 32, 0.6);
+    padding: 0.42rem 0.6rem;
+    border-radius: 3px;
+  }
+
+  .exp-link.center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .exp-link.disabled {
+    color: #5d5750;
+    border-color: #1e2e40;
+    pointer-events: none;
+  }
+  @media (max-width: 680px) {
+    .exp-pager { justify-content: center; }
+    .exp-link.center { order: -1; width: 100%; text-align: center; margin: 0; }
+  }
+</style>

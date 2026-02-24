@@ -411,13 +411,18 @@ export const townsCatalog: TownEntry[] = [
   { name: 'Washington DC', state: 'VA/MD', day: 1, role: 'drive-through', note: 'Monuments grey in winter fog' },
   { name: 'Charlotte', state: 'NC', day: 1, role: 'overnight', note: 'Night 1. City BBQ.' },
   // Day 2
+  { name: 'Atlanta', state: 'GA', day: 2, role: 'drive-through', note: 'Snowed through the city.' },
   { name: 'Auburn', state: 'AL', day: 2, role: 'lunch', note: 'Cracker Barrel — full of AU students on a snow day' },
   { name: 'Montgomery', state: 'AL', day: 2, role: 'overnight', note: 'Night 2. AYA Soulful Dining.' },
   // Day 3
   { name: 'Selma', state: 'AL', day: 3, role: 'drive-through', note: 'Country road west' },
   { name: 'Jackson', state: 'MS', day: 3, role: 'overnight', note: 'Night 3. Arrived after dark.' },
   // Day 4
+  { name: 'Monroe', state: 'LA', day: 4, role: 'drive-through', note: 'I-20 west through the bayou corridor.' },
   { name: 'Shreveport', state: 'LA', day: 4, role: 'lunch', note: "Sam's Southern Eatery — oyster po'boy, found by luck" },
+  { name: 'Tyler', state: 'TX', day: 4, role: 'drive-through', note: 'East Texas pine country on I-20.' },
+  { name: 'Waco', state: 'TX', day: 4, role: 'drive-through', note: 'I-35 south through central Texas.' },
+  { name: 'Round Rock', state: 'TX', day: 4, role: 'drive-through', note: 'North of Austin in evening traffic.' },
   { name: 'Austin', state: 'TX', day: 4, role: 'overnight', note: "Night 4. Rudy's BBQ." },
   // Day 5
   { name: 'Fredericksburg', state: 'TX', day: 5, role: 'drive-through', note: 'Hill Country' },
@@ -441,5 +446,5 @@ export const townsCatalog: TownEntry[] = [
   // Day 9
   { name: 'Yuma', state: 'AZ', day: 9, role: 'drive-through', note: 'Sonoran Desert running out' },
   { name: 'Chino Hills', state: 'CA', day: 9, role: 'drive-through', note: 'Stopped traffic. Tacoma fit right in.' },
-  { name: 'Santa Monica', state: 'CA', day: 9, role: 'overnight', note: 'End of the road. Locanda Portofino. Walk from the beach.' },
+  { name: 'Los Angeles', state: 'CA', day: 9, role: 'overnight', note: 'End of the road. Locanda Portofino. Walk from the beach.' },
 ];

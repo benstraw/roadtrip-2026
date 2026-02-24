@@ -1,6 +1,6 @@
 ---
 import { days } from '../data/days';
-import MapNav from '../components/MapNav.astro';
+import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
 const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
@@ -27,12 +27,12 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
 
     /* ─── HEADER ──────────────────────────────────────────────────────────────── */
     .page-header {
-      padding: 1.25rem 2rem;
+      padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1rem;
     }
 
     .page-header h1 {
@@ -41,16 +41,9 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
       color: var(--accent);
     }
 
-    .page-header .subtitle {
-      font-size: 0.65rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-
     .back-link {
-      margin-left: auto;
-      font-size: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-muted);
@@ -61,6 +54,7 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
       transition: color 0.2s;
     }
     .back-link:hover { color: var(--accent); }
+    .pager-wrap { padding: 0.7rem 1rem 0.9rem; border-bottom: 1px solid var(--border); }
 
     /* ─── EXPERIMENT SECTIONS ─────────────────────────────────────────────────── */
     .experiments {
@@ -224,9 +218,9 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
 <!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
 <header class="page-header">
   <h1>Tile Styles</h1>
-  <span class="subtitle">Map tile sampler</span>
-  <MapNav current="tilestyles" />
+  <a href="/" class="back-link">← Back to Trip</a>
 </header>
+<div class="pager-wrap"><ExperimentPager current="/tilestyles" /></div>
 
 <!-- ─── EXPERIMENTS ──────────────────────────────────────────────────────────── -->
 <div class="experiments">

@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import DayCard from '../components/DayCard.astro';
-import { days, tripTotals } from '../data/days';
+import { days } from '../data/days';
 ---
 
 <Base title="The Road — Philly to Los Angeles" description="9 days. 3,753 miles. Philadelphia to Los Angeles." ogImage="/og/index.png">
@@ -24,12 +24,11 @@ import { days, tripTotals } from '../data/days';
 
   /* ─── HERO ─────────────────────────────────────────────────────────────────── */
   .hero {
-    min-height: min(60vh, 520px);
+    min-height: min(64vh, 560px);
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: flex-start;
-    padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 6vw, 5rem);
+    justify-content: flex-start;
+    padding: clamp(1rem, 3vw, 1.8rem);
     position: relative;
     overflow: hidden;
   }
@@ -40,7 +39,7 @@ import { days, tripTotals } from '../data/days';
     z-index: 0;
   }
 
-  /* Darken the watercolor tiles slightly so the content box pops */
+  /* Darken the watercolor tiles slightly so UI overlays read */
   #hero-map::after {
     content: '';
     position: absolute;
@@ -50,141 +49,121 @@ import { days, tripTotals } from '../data/days';
     z-index: 1;
   }
 
-  .hero-content {
+  .hero-hud {
     position: relative;
     z-index: 2;
-    max-width: 680px;
-  }
-
-  .hero-content-box {
-    background: rgba(7, 16, 26, 0.72);
-    border: 1px solid rgba(200, 168, 74, 0.32);
+    max-width: min(520px, calc(100% - 1.5rem));
+    background: linear-gradient(135deg, rgba(7, 16, 26, 0.82) 0%, rgba(7, 16, 26, 0.64) 100%);
+    border: 1px solid rgba(200, 168, 74, 0.28);
     border-radius: 4px;
-    padding: 1.5rem 2rem;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    padding: 0.9rem 1rem 0.85rem;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.2);
   }
 
-  .hero-eyebrow {
+  .hero-kicker {
     font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
+    font-size: 0.55rem;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .eyebrow-line {
-    width: 40px;
-    height: 1px;
-    background: var(--accent);
-    opacity: 0.5;
+    margin-bottom: 0.45rem;
+    opacity: 0.92;
   }
 
   .hero-title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-size: clamp(1.65rem, 5vw, 2.6rem);
     font-weight: 900;
-    line-height: 0.92;
-    margin-bottom: 0.85rem;
+    line-height: 0.94;
+    margin-bottom: 0.35rem;
     color: var(--text);
   }
 
-  .hero-title em {
-    font-style: italic;
-    color: var(--accent);
-    display: block;
-  }
-
   .hero-sub {
-    font-family: 'Caveat', cursive;
-    font-size: clamp(1rem, 2vw, 1.2rem);
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
-    line-height: 1.4;
-  }
-
-  .hero-stats {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-  }
-
-  .hero-stat .val {
     font-family: 'Space Mono', monospace;
-    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-size: clamp(0.6rem, 1.4vw, 0.68rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.65rem;
+    line-height: 1.5;
+  }
+
+  .hero-meta-row {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.65rem;
+  }
+
+  .hero-pill {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    border: 1px solid rgba(200, 168, 74, 0.28);
+    background: rgba(200, 168, 74, 0.08);
+    padding: 0.3rem 0.45rem 0.28rem;
+    border-radius: 2px;
+  }
+
+  .hero-pill .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--accent);
-    line-height: 1;
+    line-height: 0.95;
   }
 
-  .hero-stat .lbl {
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
+  .hero-pill .lbl {
+    font-size: 0.5rem;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
     color: var(--text-muted);
   }
 
-  .hero-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--bg);
-    background: var(--accent);
-    padding: 0.75em 1.75em;
-    border-radius: 2px;
-    transition: opacity 0.2s, letter-spacing 0.2s;
-  }
-
-  .hero-cta:hover { opacity: 0.85; letter-spacing: 0.2em; }
-
-  .hero-secondary-links {
+  .hero-links-row {
     display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.45rem;
     flex-wrap: wrap;
   }
 
+  .hero-cta,
   .hero-secondary-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     font-family: 'Space Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.56rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--accent);
-    border: 1px solid rgba(200, 168, 74, 0.35);
-    padding: 0.55em 1.1em;
+    padding: 0.45rem 0.65rem;
     border-radius: 2px;
-    transition: background 0.2s, border-color 0.2s, letter-spacing 0.2s;
+    transition: background 0.18s, border-color 0.18s, letter-spacing 0.18s;
+  }
+
+  .hero-cta {
+    color: var(--bg);
+    background: var(--accent);
+    border: 1px solid rgba(200, 168, 74, 0.9);
+  }
+
+  .hero-cta:hover { letter-spacing: 0.15em; background: #d5b860; }
+
+  .hero-secondary-link {
+    color: var(--accent);
+    border: 1px solid rgba(200, 168, 74, 0.42);
+    background: rgba(7, 16, 26, 0.44);
   }
 
   .hero-secondary-link:hover {
-    background: rgba(200, 168, 74, 0.1);
+    background: rgba(200, 168, 74, 0.12);
     border-color: rgba(200, 168, 74, 0.65);
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
   }
 
-  .scroll-indicator {
-    position: absolute;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
+  .scroll-indicator-below {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -194,15 +173,64 @@ import { days, tripTotals } from '../data/days';
     font-size: 0.55rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    animation: bob 2s ease-in-out infinite;
-    z-index: 2;
+    animation: bobBelow 2s ease-in-out infinite;
+    padding: 0.7rem 0 0.4rem;
   }
 
-  .scroll-indicator svg { width: 18px; height: 18px; }
+  .scroll-indicator-below svg { width: 18px; height: 18px; }
 
-  @keyframes bob {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(6px); }
+  @keyframes bobBelow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ─── REPLAY BUTTON ────────────────────────────────────────────────────────── */
+  #hero-replay-btn {
+    position: absolute;
+    right: 1.2rem;
+    bottom: 1.2rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.68rem 1rem;
+    background: rgba(200, 168, 74, 0.9);
+    border: 1px solid rgba(200, 168, 74, 0.95);
+    color: #08111c;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(200,168,74,0.25);
+    transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  #hero-replay-btn:hover {
+    background: #d8ba5e;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,168,74,0.4);
+  }
+  #hero-replay-btn.playing {
+    color: var(--text);
+    background: rgba(7, 16, 26, 0.88);
+    border-color: rgba(200, 168, 74, 0.45);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+  #hero-replay-btn.playing:hover {
+    background: rgba(7, 16, 26, 0.96);
+    transform: translateY(-1px);
+  }
+  @media (max-width: 480px) {
+    #hero-replay-btn { right: 0.75rem; bottom: 0.75rem; font-size: 0.62rem; padding: 0.56rem 0.82rem; letter-spacing: 0.12em; }
+    .hero-hud { max-width: calc(100% - 1rem); padding: 0.8rem 0.75rem; }
+    .hero-links-row { gap: 0.35rem; }
+  }
+
+  @media (max-width: 768px) {
+    .scroll-indicator-below { padding: 0.55rem 0 0.25rem; }
   }
 
   /* ─── SECTION HEADER ───────────────────────────────────────────────────────── */
@@ -380,71 +408,51 @@ import { days, tripTotals } from '../data/days';
 <section class="hero">
   <div id="hero-map" aria-hidden="true"></div>
 
-  <div class="hero-content animate-fade-up">
-    <div class="hero-content-box">
-      <p class="hero-eyebrow">
-        <span class="eyebrow-line"></span>
-        Father &amp; Son — Jan 30 – Feb 7, 2026
-      </p>
-      <h1 class="hero-title">
-        The<br/>
-        <em>Road</em>
-      </h1>
-      <p class="hero-sub">
-        Philadelphia to Los Angeles.<br/>
-        A father, a son, a red Tacoma.<br/>
-        Nine days. Made it.
-      </p>
+  <div class="hero-hud animate-fade-up">
+    <p class="hero-kicker">Father &amp; Son · Jan 30 – Feb 7, 2026</p>
+    <h1 class="hero-title">The Road</h1>
+    <p class="hero-sub">Philadelphia to Los Angeles · red Tacoma · nine days · 14 states · 3753 Miles</p>
 
-      <div class="hero-stats stagger">
-        <div class="hero-stat">
-          <span class="val">{tripTotals.odometerMiles.toLocaleString()}</span>
-          <span class="lbl">total miles</span>
-        </div>
-        <div class="hero-stat">
-          <span class="val">{tripTotals.days}</span>
-          <span class="lbl">days</span>
-        </div>
-        <div class="hero-stat">
-          <span class="val">{tripTotals.states.length}</span>
-          <span class="lbl">states</span>
-        </div>
-      </div>
-
+    <div class="hero-links-row">
       <a href="#days" class="hero-cta">
-        View the Journey
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        Journey
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="5" y1="12" x2="19" y2="12"/>
           <polyline points="12,5 19,12 12,19"/>
         </svg>
       </a>
-
-      <div class="hero-secondary-links">
-        <a href="/mapbook" class="hero-secondary-link">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-          Map Book
-        </a>
-        <a href="/almanac" class="hero-secondary-link">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
-            <line x1="9" y1="21" x2="9" y2="9"/>
-          </svg>
-          Almanac
-        </a>
-      </div>
+      <a href="/mapbook" class="hero-secondary-link">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        Map Book
+      </a>
+      <a href="/almanac" class="hero-secondary-link">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+          <line x1="9" y1="21" x2="9" y2="9"/>
+        </svg>
+        Almanac
+      </a>
     </div>
   </div>
 
-  <div class="scroll-indicator" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <polyline points="6,9 12,15 18,9"/>
+  <button id="hero-replay-btn" aria-label="Drive the route">
+    <svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" aria-hidden="true">
+      <polygon points="0,0 9,5 0,10"/>
     </svg>
-    scroll
-  </div>
+    Drive It
+  </button>
+
 </section>
+
+<div class="scroll-indicator-below" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <polyline points="6,9 12,15 18,9"/>
+  </svg>
+  scroll
+</div>
 
 <!-- ─── DAY TIMELINE ──────────────────────────────────────────────────────── -->
 <main id="days">
@@ -494,12 +502,13 @@ import { days, tripTotals } from '../data/days';
 <footer class="site-footer">
   <span class="hand">Made it home. Eventually.</span>
   <small>Philadelphia → Los Angeles &nbsp;·&nbsp; January 30 – February 7, 2026</small>
+  <br />
   <small>
     <a href="/almanac" class="almanac-link">The Almanac →</a>
     &nbsp;·&nbsp;
     <a href="/mapbook" class="almanac-link">Map Book →</a>
     &nbsp;·&nbsp;
-    <a href="/tilestyles" class="almanac-link">Map Experiments →</a>
+    <a href="/maptech" class="almanac-link">Map Experiments →</a>
   </small>
 </footer>
 
@@ -508,15 +517,15 @@ import { days, tripTotals } from '../data/days';
 <script is:inline>
 (function() {
   const HERO_DAYS = [
-    { color:'#7ebcd6', gpx:'/maps/Day 1 - Philly to Charlotte.gpx' },
-    { color:'#a0c8e8', gpx:'/maps/Day 2 - Charlotte NC to Montgomery AL.gpx' },
-    { color:'#e8b870', gpx:'/maps/Day 3 - Montgomery AL to Jackson MS.gpx' },
-    { color:'#e89050', gpx:'/maps/Day 4 - Jackson MS to Austin TX.gpx' },
-    { color:'#d47044', gpx:'/maps/Day 5 - Austin TX to Terilingua TX.gpx' },
-    { color:'#c85848', gpx:'/maps/Day 6 - Big Bend National Park.gpx' },
-    { color:'#b85860', gpx:'/maps/Day 7 - Big Bend National Park.gpx' },
-    { color:'#c8a84a', gpx:'/maps/Day 8 - Terilingua TX to Tucson AZ.gpx' },
-    { color:'#8cd6a8', gpx:'/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx' },
+    { day: 1, color:'#7ebcd6', gpx:'/maps/Day 1 - Philly to Charlotte.gpx' },
+    { day: 2, color:'#a0c8e8', gpx:'/maps/Day 2 - Charlotte NC to Montgomery AL.gpx' },
+    { day: 3, color:'#e8b870', gpx:'/maps/Day 3 - Montgomery AL to Jackson MS.gpx' },
+    { day: 4, color:'#e89050', gpx:'/maps/Day 4 - Jackson MS to Austin TX.gpx' },
+    { day: 5, color:'#d47044', gpx:'/maps/Day 5 - Austin TX to Terilingua TX.gpx' },
+    { day: 6, color:'#c85848', gpx:'/maps/Day 6 - Big Bend National Park.gpx' },
+    { day: 7, color:'#b85860', gpx:'/maps/Day 7 - Big Bend National Park.gpx' },
+    { day: 8, color:'#c8a84a', gpx:'/maps/Day 8 - Terilingua TX to Tucson AZ.gpx' },
+    { day: 9, color:'#8cd6a8', gpx:'/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx' },
   ];
 
   const heroMap = L.map('hero-map', {
@@ -530,12 +539,19 @@ import { days, tripTotals } from '../data/days';
     attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 16,
   }).addTo(heroMap);
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    opacity: 0.90,
+    pane: 'overlayPane',
+  }).addTo(heroMap);
 
-  // Set initial view while tracks load
   heroMap.setView([36.5, -95], 4);
 
+  // ── Static GPX tracks ──────────────────────────────────────────────────────
+  const gpxLayers = [];
   const boundsArr = [];
-  let loaded = 0;
+  let gpxLoaded = 0;
+  let fullBounds = null;
 
   HERO_DAYS.forEach(function(d) {
     var layer = new L.GPX(d.gpx, {
@@ -545,14 +561,198 @@ import { days, tripTotals } from '../data/days';
     });
     layer.on('loaded', function(e) {
       boundsArr.push(e.target.getBounds());
-      loaded++;
-      if (loaded === HERO_DAYS.length) {
-        var combined = L.latLngBounds(boundsArr[0].getSouthWest(), boundsArr[0].getNorthEast());
-        for (var i = 1; i < boundsArr.length; i++) combined.extend(boundsArr[i]);
-        heroMap.fitBounds(combined, { padding: [60, 60], animate: false });
+      gpxLoaded++;
+      if (gpxLoaded === HERO_DAYS.length) {
+        fullBounds = L.latLngBounds(boundsArr[0].getSouthWest(), boundsArr[0].getNorthEast());
+        for (var i = 1; i < boundsArr.length; i++) fullBounds.extend(boundsArr[i]);
+        heroMap.fitBounds(fullBounds, { padding: [60, 60], animate: false });
       }
     });
     layer.addTo(heroMap);
+    gpxLayers.push(layer);
+  });
+
+  // ── Replay: pre-load raw GPX points ───────────────────────────────────────
+
+  async function parseGPX(url) {
+    const resp = await fetch(url);
+    const text = await resp.text();
+    const doc = new DOMParser().parseFromString(text, 'application/xml');
+    return Array.from(doc.querySelectorAll('trkpt')).map(function(pt) {
+      return { lat: parseFloat(pt.getAttribute('lat')), lon: parseFloat(pt.getAttribute('lon')) };
+    });
+  }
+
+  const MAX_PER_DAY = 400;
+  const flatPts = [];
+  let replayReady = false;
+
+  (async function preloadReplay() {
+    for (var i = 0; i < HERO_DAYS.length; i++) {
+      var d = HERO_DAYS[i];
+      var raw = await parseGPX(d.gpx);
+      var step = Math.max(1, Math.floor(raw.length / MAX_PER_DAY));
+      var sampled = raw.filter(function(_, idx) { return idx % step === 0 || idx === raw.length - 1; });
+      for (var j = 0; j < sampled.length; j++) {
+        flatPts.push({ lat: sampled[j].lat, lon: sampled[j].lon, day: d.day, color: d.color });
+      }
+    }
+    replayReady = true;
+  })();
+
+  // ── Truck icon ────────────────────────────────────────────────────────────
+
+  var truckIcon = L.divIcon({
+    className: '',
+    html: '<svg width="28" height="16" viewBox="0 0 28 16" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,0.55))">'
+      + '<rect x="1" y="3" width="11" height="10" rx="1.2" fill="#cc2200" stroke="#8a1500" stroke-width="0.6"/>'
+      + '<rect x="12" y="1.5" width="13" height="13" rx="2" fill="#cc2200" stroke="#8a1500" stroke-width="0.6"/>'
+      + '<rect x="19" y="4" width="4.5" height="6" rx="1" fill="#b8d8f0" opacity="0.75"/>'
+      + '<rect x="24.5" y="4.5" width="2" height="7" rx="0.8" fill="#555"/>'
+      + '<line x1="12" y1="3" x2="12" y2="13" stroke="#8a1500" stroke-width="0.8"/>'
+      + '<rect x="2" y="0" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '<rect x="2" y="12.5" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '<rect x="8" y="0" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '<rect x="8" y="12.5" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '<rect x="14" y="0" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '<rect x="14" y="12.5" width="5" height="3.5" rx="1.2" fill="#1a1a1a"/>'
+      + '</svg>',
+    iconSize: [28, 16],
+    iconAnchor: [14, 8],
+  });
+
+  // ── Replay state ──────────────────────────────────────────────────────────
+
+  var replayLines = {};
+  var replayCoords = {};
+  var truckMarker = null;
+  var replayIdx = 0;
+  var replayPos = 0;
+  var replayAnimFrame = null;
+  var replayStartTimer = null;
+  var ptsPerSecond = 120; // ~30s for ~3600 sampled points
+  var replayFollowZoom = 7;
+  var replayLeadInMs = 1500;
+  var replayLastTs = null;
+  var replayLastPanTs = 0;
+  var replayPanIntervalMs = 120;
+
+  var replayBtn = document.getElementById('hero-replay-btn');
+  var btnPlayIcon = '<svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" aria-hidden="true"><polygon points="0,0 9,5 0,10"/></svg>';
+  var btnStopIcon = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><rect width="10" height="10" rx="1.5"/></svg>';
+
+  function finishReplay() {
+    cancelAnimationFrame(replayAnimFrame);
+    replayAnimFrame = null;
+    if (replayStartTimer) {
+      clearTimeout(replayStartTimer);
+      replayStartTimer = null;
+    }
+    replayLastTs = null;
+    replayLastPanTs = 0;
+
+    // Remove truck
+    if (truckMarker) { heroMap.removeLayer(truckMarker); truckMarker = null; }
+
+    // Remove animated lines
+    Object.values(replayLines).forEach(function(l) { heroMap.removeLayer(l); });
+    replayLines = {};
+    replayCoords = {};
+
+    // Restore static tracks
+    gpxLayers.forEach(function(l) { l.addTo(heroMap); });
+
+    // Fit back to full bounds
+    if (fullBounds) heroMap.fitBounds(fullBounds, { padding: [60, 60], animate: true, duration: 0.8 });
+
+    // Reset button
+    replayBtn.innerHTML = btnPlayIcon + ' Drive Again';
+    replayBtn.classList.remove('playing');
+    replayIdx = 0;
+    replayPos = 0;
+  }
+
+  function replayStep(ts) {
+    if (replayLastTs === null) replayLastTs = ts;
+    var dt = Math.min((ts - replayLastTs) / 1000, 0.05);
+    replayLastTs = ts;
+    replayPos = Math.min(replayPos + (ptsPerSecond * dt), flatPts.length - 1);
+
+    var end = Math.floor(replayPos);
+    for (var i = replayIdx; i <= end; i++) {
+      var pt = flatPts[i];
+      if (!replayCoords[pt.day]) replayCoords[pt.day] = [];
+      replayCoords[pt.day].push([pt.lat, pt.lon]);
+      replayLines[pt.day].setLatLngs(replayCoords[pt.day]);
+    }
+    replayIdx = end + 1;
+
+    var baseIdx = Math.min(Math.floor(replayPos), flatPts.length - 1);
+    var nextIdx = Math.min(baseIdx + 1, flatPts.length - 1);
+    var t = replayPos - baseIdx;
+    var cur = flatPts[baseIdx];
+    var nxt = flatPts[nextIdx];
+    var lat = cur.lat + (nxt.lat - cur.lat) * t;
+    var lon = cur.lon + (nxt.lon - cur.lon) * t;
+    if (truckMarker) {
+      var curLatLng = [lat, lon];
+      truckMarker.setLatLng(curLatLng);
+      if ((ts - replayLastPanTs) >= replayPanIntervalMs) {
+        heroMap.panTo(curLatLng, { animate: true, duration: 0.18, easeLinearity: 1.0, noMoveStart: true });
+        replayLastPanTs = ts;
+      }
+    }
+
+    if (replayPos >= flatPts.length - 1) { finishReplay(); return; }
+    replayAnimFrame = requestAnimationFrame(replayStep);
+  }
+
+  function startReplay() {
+    // Hide static tracks
+    gpxLayers.forEach(function(l) { heroMap.removeLayer(l); });
+
+    // Create empty animated polylines per day
+    replayLines = {};
+    replayCoords = {};
+    HERO_DAYS.forEach(function(d) {
+      replayLines[d.day] = L.polyline([], { color: d.color, weight: 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(heroMap);
+    });
+
+    // Place truck at Philly
+    truckMarker = L.marker([39.94, -75.15], { icon: truckIcon, zIndexOffset: 1000 }).addTo(heroMap);
+
+    // Snap map to the truck and stay locked during replay
+    heroMap.setView([39.94, -75.15], replayFollowZoom, { animate: true });
+
+    replayBtn.innerHTML = btnStopIcon + ' Stop';
+    replayBtn.classList.add('playing');
+
+    replayIdx = 0;
+    replayPos = 0;
+    replayLastTs = null;
+    replayLastPanTs = 0;
+    replayStartTimer = setTimeout(function() {
+      replayStartTimer = null;
+      replayAnimFrame = requestAnimationFrame(replayStep);
+    }, replayLeadInMs);
+  }
+
+  replayBtn.addEventListener('click', function() {
+    if (replayAnimFrame) {
+      // Stop mid-replay
+      finishReplay();
+      return;
+    }
+
+    if (!replayReady) {
+      replayBtn.innerHTML = '…';
+      var poll = setInterval(function() {
+        if (replayReady) { clearInterval(poll); startReplay(); }
+      }, 200);
+      return;
+    }
+
+    startReplay();
   });
 })();
 </script>

@@ -1,0 +1,107 @@
+---
+import ExperimentPager from '../components/ExperimentPager.astro';
+import MapBase from '../layouts/MapBase.astro';
+---
+<MapBase title="Speed Painting — The Road" leaflet>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0c1420; --bg-deep:#07101a; --surface:#111e30; --accent:#c8a84a; --text:#e8e0d0; --text-muted:#8a7e6a; --border:#1e2e40; }
+  body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; }
+
+  .page-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
+  .back-link:hover { color: var(--accent); }
+  h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
+
+  .body { max-width: 1200px; margin: 0 auto; padding: 1.25rem; }
+  .desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.9rem; }
+  .exp-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  #map-speed { height: 560px; width: 100%; }
+  .speed-legend { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid var(--border); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .legend-swatch { width: 20px; height: 4px; border-radius: 2px; }
+  @media (max-width: 700px) { #map-speed { height: 420px; } }
+</style>
+
+<header class="page-header">
+  <a href="/" class="back-link">← Back to Trip</a>
+  <h1>Speed Painting</h1>
+</header>
+<div class="body" style="padding-bottom:0.6rem;">
+  <ExperimentPager current="/mapexp-speed" />
+</div>
+
+<div class="body">
+  <p class="desc">Every GPS segment colored by speed: gray stopped, blue city, orange secondary roads, red interstate.</p>
+  <div class="exp-box">
+    <div id="map-speed"></div>
+    <div class="speed-legend">
+      <span style="color:var(--text-muted)">Speed:</span>
+      <div class="legend-item"><div class="legend-swatch" style="background:#444"></div> Stopped (&lt;5 mph)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#3a86ff"></div> City (5–35)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#ff9f1c"></div> Secondary (35–60)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#e63946"></div> Highway (60+)</div>
+      <div class="legend-item" style="margin-left:auto; font-size:0.6rem;" id="speed-status">Loading tracks…</div>
+    </div>
+  </div>
+</div>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline>
+const DAYS = [
+  { gpx: '/maps/Day 1 - Philly to Charlotte.gpx' },
+  { gpx: '/maps/Day 2 - Charlotte NC to Montgomery AL.gpx' },
+  { gpx: '/maps/Day 3 - Montgomery AL to Jackson MS.gpx' },
+  { gpx: '/maps/Day 4 - Jackson MS to Austin TX.gpx' },
+  { gpx: '/maps/Day 5 - Austin TX to Terilingua TX.gpx' },
+  { gpx: '/maps/Day 6 - Big Bend National Park.gpx' },
+  { gpx: '/maps/Day 7 - Big Bend National Park.gpx' },
+  { gpx: '/maps/Day 8 - Terilingua TX to Tucson AZ.gpx' },
+  { gpx: '/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx' },
+];
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function speedColor(mph) { if (mph < 5) return '#444'; if (mph < 35) return '#3a86ff'; if (mph < 60) return '#ff9f1c'; return '#e63946'; }
+async function parseGPX(url) {
+  const resp = await fetch(url);
+  const text = await resp.text();
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const trkpts = Array.from(doc.querySelectorAll('trkpt'));
+  return trkpts.map(pt => ({ lat: parseFloat(pt.getAttribute('lat')), lon: parseFloat(pt.getAttribute('lon')), time: new Date(pt.querySelector('time')?.textContent || 0) }));
+}
+
+(async function init() {
+  const map = L.map('map-speed', { scrollWheelZoom: false, center: [35, -90], zoom: 5 });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 18, subdomains: 'abcd' }).addTo(map);
+  const statusEl = document.getElementById('speed-status');
+  let loaded = 0;
+  const allBounds = [];
+  for (const d of DAYS) {
+    const pts = await parseGPX(d.gpx);
+    loaded++;
+    statusEl.textContent = `${loaded} / 9 loaded`;
+    const STEP = 5;
+    for (let i = 0; i < pts.length - STEP; i += STEP) {
+      const a = pts[i], b = pts[i + STEP];
+      const dist = haversine(a.lat, a.lon, b.lat, b.lon);
+      const dtMs = b.time - a.time;
+      const mph = dtMs > 0 ? (dist / (dtMs / 3600000)) : 0;
+      const clampedMph = Math.min(mph, 90);
+      L.polyline([[a.lat, a.lon], [b.lat, b.lon]], { color: speedColor(clampedMph), weight: 2.5, opacity: 0.8 }).addTo(map);
+    }
+    allBounds.push(L.latLngBounds(pts.map(p => [p.lat, p.lon])));
+    if (loaded === DAYS.length) {
+      const combined = allBounds.reduce((acc, b) => acc.extend(b));
+      map.fitBounds(combined, { padding: [30, 30] });
+      statusEl.textContent = '9 / 9 — all tracks loaded';
+    }
+  }
+})();
+</script>
+</MapBase>

@@ -1,0 +1,121 @@
+---
+import ExperimentPager from '../components/ExperimentPager.astro';
+import MapBase from '../layouts/MapBase.astro';
+---
+<MapBase title="The Profile — The Road">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0c1420; --bg-deep:#07101a; --surface:#111e30; --accent:#c8a84a; --text:#e8e0d0; --text-muted:#8a7e6a; --border:#1e2e40; }
+  body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; }
+
+  .page-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
+  .back-link:hover { color: var(--accent); }
+  h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
+
+  .body { max-width: 1200px; margin: 0 auto; padding: 1.25rem; }
+  .desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.9rem; }
+  .exp-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .elev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; background: var(--border); }
+  .elev-cell { background: var(--bg-deep); padding: 1rem; }
+  .elev-cell-header { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.6rem; }
+  .elev-day-num { font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; }
+  .elev-day-route { font-size: 0.7rem; color: var(--text-muted); }
+  .elev-chart { width: 100%; height: 80px; }
+  .elev-stats { display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  .elev-stats span { font-family: 'Space Mono', monospace; }
+</style>
+
+<header class="page-header">
+  <a href="/" class="back-link">← Back to Trip</a>
+  <h1>The Profile</h1>
+</header>
+<div class="body" style="padding-bottom:0.6rem;">
+  <ExperimentPager current="/mapexp-profile" />
+</div>
+
+<div class="body">
+  <p class="desc">Elevation over distance for each day. Flat Gulf miles, big West Texas climbs, and the final drop below sea level before California.</p>
+  <div class="exp-box">
+    <div class="elev-grid" id="elev-grid"></div>
+  </div>
+</div>
+
+<script is:inline>
+const DAYS = [
+  { day: 1, from: 'Philadelphia', to: 'Charlotte',  gpx: '/maps/Day 1 - Philly to Charlotte.gpx',          color: '#7ebcd6' },
+  { day: 2, from: 'Charlotte',    to: 'Montgomery', gpx: '/maps/Day 2 - Charlotte NC to Montgomery AL.gpx', color: '#a0c8e0' },
+  { day: 3, from: 'Montgomery',   to: 'Jackson',    gpx: '/maps/Day 3 - Montgomery AL to Jackson MS.gpx',   color: '#c4782a' },
+  { day: 4, from: 'Jackson',      to: 'Austin',     gpx: '/maps/Day 4 - Jackson MS to Austin TX.gpx',       color: '#d4761e' },
+  { day: 5, from: 'Austin',       to: 'Terlingua',  gpx: '/maps/Day 5 - Austin TX to Terilingua TX.gpx',    color: '#e8681a' },
+  { day: 6, from: 'Terlingua',    to: 'Big Bend',   gpx: '/maps/Day 6 - Big Bend National Park.gpx',        color: '#d4481a' },
+  { day: 7, from: 'Big Bend',     to: 'Big Bend',   gpx: '/maps/Day 7 - Big Bend National Park.gpx',        color: '#c83a0a' },
+  { day: 8, from: 'Terlingua',    to: 'Tucson',     gpx: '/maps/Day 8 - Terilingua TX to Tucson AZ.gpx',    color: '#d4600a' },
+  { day: 9, from: 'Tucson',       to: 'California', gpx: '/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx',   color: '#f5c400' },
+];
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function metersToFeet(m) { return m * 3.28084; }
+async function parseGPX(url) {
+  const resp = await fetch(url);
+  const text = await resp.text();
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  return Array.from(doc.querySelectorAll('trkpt')).map(pt => ({
+    lat: parseFloat(pt.getAttribute('lat')),
+    lon: parseFloat(pt.getAttribute('lon')),
+    ele: parseFloat(pt.querySelector('ele')?.textContent || '0'),
+  }));
+}
+
+(async function init() {
+  const grid = document.getElementById('elev-grid');
+  for (const d of DAYS) {
+    const cell = document.createElement('div');
+    cell.className = 'elev-cell';
+    cell.innerHTML = `
+      <div class="elev-cell-header">
+        <span class="elev-day-num" style="color:${d.color}">Day ${d.day}</span>
+        <span class="elev-day-route">${d.from} → ${d.to}</span>
+      </div>
+      <svg class="elev-chart" id="elev-svg-${d.day}" viewBox="0 0 280 80" preserveAspectRatio="none"></svg>
+      <div class="elev-stats" id="elev-stats-${d.day}">Loading…</div>
+    `;
+    grid.appendChild(cell);
+
+    const pts = await parseGPX(d.gpx);
+    const sampled = pts.filter((_, i) => i % 8 === 0);
+    let cumDist = 0;
+    const series = [];
+    for (let i = 0; i < sampled.length; i++) {
+      if (i > 0) cumDist += haversine(sampled[i - 1].lat, sampled[i - 1].lon, sampled[i].lat, sampled[i].lon);
+      series.push({ dist: cumDist, ele: metersToFeet(sampled[i].ele) });
+    }
+    const minEle = Math.min(...series.map(p => p.ele));
+    const maxEle = Math.max(...series.map(p => p.ele));
+    const totalDist = series[series.length - 1]?.dist || 1;
+    const eleRange = maxEle - minEle || 1;
+    const W = 280, H = 80, PAD = 4;
+    const toX = dist => PAD + (dist / totalDist) * (W - PAD * 2);
+    const toY = ele => H - PAD - ((ele - minEle) / eleRange) * (H - PAD * 2);
+    const pts2 = series.map(p => `${toX(p.dist).toFixed(1)},${toY(p.ele).toFixed(1)}`).join(' ');
+    const areaPath = `M${toX(0)},${H} L${pts2.replace(/(\d+\.?\d*),(\d+\.?\d*)/g, '$1,$2 ')} L${toX(totalDist)},${H} Z`;
+    document.getElementById(`elev-svg-${d.day}`).innerHTML = `
+      <defs><linearGradient id="grad-${d.day}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${d.color}" stop-opacity="0.6"/><stop offset="100%" stop-color="${d.color}" stop-opacity="0.08"/></linearGradient></defs>
+      <path d="${areaPath}" fill="url(#grad-${d.day})"/><polyline points="${pts2}" fill="none" stroke="${d.color}" stroke-width="1.2" stroke-linejoin="round"/>
+    `;
+    document.getElementById(`elev-stats-${d.day}`).innerHTML = `
+      <div>Min: <span>${Math.round(minEle).toLocaleString()} ft</span></div>
+      <div>Max: <span>${Math.round(maxEle).toLocaleString()} ft</span></div>
+      <div>Gain: <span>+${Math.round(maxEle - minEle).toLocaleString()} ft</span></div>
+      <div>Dist: <span>${totalDist.toFixed(0)} mi</span></div>
+    `;
+  }
+})();
+</script>
+</MapBase>

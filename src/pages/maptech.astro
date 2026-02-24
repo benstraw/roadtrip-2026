@@ -1,5 +1,5 @@
 ---
-import MapNav from '../components/MapNav.astro';
+import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
 ---
 <MapBase title="Tech — The Road" description="How the mapping was built: library choices, tile providers, GPX pipeline, and D3 visualization.">
@@ -18,11 +18,12 @@ import MapBase from '../layouts/MapBase.astro';
 
     /* ─── HEADER ─── */
     .page-header {
-      padding: 1.25rem 2rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); }
-    .page-header .subtitle { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
+    .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
+    .back-link:hover { color: var(--accent); }
 
     /* ─── LAYOUT ─── */
     .tech-body {
@@ -44,6 +45,8 @@ import MapBase from '../layouts/MapBase.astro';
       line-height: 1.75;
     }
     .intro p + p { margin-top: 1rem; }
+
+    .pager-wrap { max-width: 820px; margin: 0 auto; padding: 0.9rem 2rem 0; }
 
     /* ─── SECTIONS ─── */
     .tech-section {
@@ -211,9 +214,11 @@ import MapBase from '../layouts/MapBase.astro';
 
 <header class="page-header">
   <h1>Tech</h1>
-  <span class="subtitle">How the mapping was built</span>
-  <MapNav current="tech" />
+  <a href="/" class="back-link">← Back to Trip</a>
 </header>
+<div class="pager-wrap">
+  <ExperimentPager current="/maptrip" />
+</div>
 
 <div class="tech-body">
 
