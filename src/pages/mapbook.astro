@@ -1,6 +1,7 @@
 ---
 import { days } from '../data/days';
 import MapNav from '../components/MapNav.astro';
+import Analytics from '@vercel/analytics/astro';
 const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
 
@@ -546,6 +547,6 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     gpxLayer.addTo(map);
   });
 </script>
-
+<Analytics />
 </body>
 </html>

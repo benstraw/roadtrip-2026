@@ -1,5 +1,6 @@
 ---
 import MapNav from '../components/MapNav.astro';
+import Analytics from '@vercel/analytics/astro';
 ---
 <!doctype html>
 <html lang="en">
@@ -438,5 +439,6 @@ function renderProfile(d, downsampled, fullSeries) {
 }
 
 </script>
+<Analytics />
 </body>
 </html>

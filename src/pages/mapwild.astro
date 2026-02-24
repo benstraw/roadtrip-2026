@@ -1,5 +1,6 @@
 ---
 import MapNav from '../components/MapNav.astro';
+import Analytics from '@vercel/analytics/astro';
 ---
 <!doctype html>
 <html lang="en">
@@ -493,5 +494,6 @@ async function parseGPX(url) {
 })();
 
 </script>
+<Analytics />
 </body>
 </html>

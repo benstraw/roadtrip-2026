@@ -1,5 +1,6 @@
 ---
 import MapNav from '../components/MapNav.astro';
+import Analytics from '@vercel/analytics/astro';
 ---
 <!doctype html>
 <html lang="en">
@@ -337,5 +338,6 @@ function drawRidge() {
 }
 
 </script>
+<Analytics />
 </body>
 </html>
