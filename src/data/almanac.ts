@@ -63,15 +63,6 @@ export const stateData: StateEntry[] = [
     note: 'Start of the trip. Dug the Tacoma out before seven. City still sleeping.',
   },
   {
-    name: 'Delaware',
-    abbrev: 'DE',
-    approxMiles: 23,
-    days: [1],
-    primaryRoads: ['I-95 S'],
-    towns: ['Wilmington'],
-    note: 'Brief crossing on I-95. Wilmington through the windshield. Gone before it registered.',
-  },
-  {
     name: 'Maryland',
     abbrev: 'MD',
     approxMiles: 95,
@@ -192,9 +183,9 @@ export const highways: HighwayEntry[] = [
   {
     route: 'I-95 S',
     name: 'Interstate 95',
-    states: ['PA', 'DE', 'MD', 'VA'],
+    states: ['PA', 'MD', 'VA'],
     days: [1],
-    note: 'Philadelphia south through Wilmington, Baltimore, and Washington. Monuments grey in winter fog.',
+    note: 'Philadelphia south through Baltimore and Washington. Monuments grey in winter fog.',
   },
   {
     route: 'I-85 S',
@@ -407,7 +398,6 @@ export const geography: GeographyEntry[] = [
 export const townsCatalog: TownEntry[] = [
   // Day 1
   { name: 'Philadelphia', state: 'PA', day: 1, role: 'stop', note: 'Start. Dug out before 7am.' },
-  { name: 'Wilmington', state: 'DE', day: 1, role: 'drive-through' },
   { name: 'Washington DC', state: 'VA/MD', day: 1, role: 'drive-through', note: 'Monuments grey in winter fog' },
   { name: 'Charlotte', state: 'NC', day: 1, role: 'overnight', note: 'Night 1. City BBQ.' },
   // Day 2
