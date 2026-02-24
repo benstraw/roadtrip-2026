@@ -261,6 +261,7 @@ export const days: Day[] = [
       { name: 'Washington DC', note: 'Monuments grey in winter fog' },
     ],
     galleryImages: [
+      { src: '/images/days/1/00_digout.webp', alt: 'Digging out the Tacoma in Philadelphia', caption: 'Dug out before seven.', wide: true },
       { src: '/images/days/1/01_mom-goodbye.webp', alt: 'Mom saying goodbye', caption: 'Mom. The send-off.', wide: true },
       { src: '/images/days/1/02_ben-dad-hoagie.webp', alt: 'Dad and Ben with a hoagie', caption: 'Last hoagie before the road.' },
       { src: '/images/days/1/03_life-is-good-red-truck-hat.webp', alt: 'Life is Good red truck hat', caption: 'Life is Good. Red truck. Seems right.' },
