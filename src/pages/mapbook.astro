@@ -1,536 +1,540 @@
 ---
-import { days } from '../data/days';
-import MapNav from '../components/MapNav.astro';
 import MapBase from '../layouts/MapBase.astro';
-const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
-<MapBase title="Tile Styles — The Road" leaflet>
+<MapBase title="Map Book — The Road" leaflet>
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
+    --accent: #c8a84a; --text: #e8e0d0; --text-muted: #8a7e6a; --border: #1e2e40;
+  }
+  html, body { height: 100vh; overflow: hidden; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Raleway', system-ui, sans-serif;
+    display: flex; flex-direction: column;
+  }
 
-    :root {
-      --bg: #0c1420;
-      --bg-deep: #07101a;
-      --surface: #111e30;
-      --accent: #c8a84a;
-      --text: #e8e0d0;
-      --text-muted: #8a7e6a;
-      --border: #1e2e40;
-    }
+  /* ── HEADER ── */
+  .page-header {
+    padding: 0.9rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0;
+  }
+  .page-header h1 {
+    font-family: 'Playfair Display', serif; font-size: 1.1rem;
+    color: var(--accent); white-space: nowrap;
+  }
+  .subtitle {
+    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); white-space: nowrap;
+  }
+  .back-link {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none;
+    display: flex; align-items: center; gap: 0.4rem;
+    transition: color 0.2s; white-space: nowrap;
+  }
+  .back-link:hover { color: var(--accent); }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Raleway', system-ui, sans-serif;
-      min-height: 100vh;
-    }
+  /* ── DAY STRIP ── */
+  .day-strip {
+    padding: 0.55rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 0.4rem; align-items: center;
+    flex-shrink: 0; overflow-x: auto; background: var(--bg-deep);
+    scrollbar-width: none;
+  }
+  .day-strip::-webkit-scrollbar { display: none; }
 
-    /* ─── HEADER ──────────────────────────────────────────────────────────────── */
-    .page-header {
-      padding: 1.25rem 2rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
+  .day-btn {
+    display: flex; align-items: center; gap: 0.35rem;
+    font-family: 'Space Mono', monospace; font-size: 0.62rem; font-weight: 700;
+    padding: 0.28rem 0.65rem; border: 1px solid var(--border); border-radius: 3px;
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .day-btn:hover { border-color: rgba(200,168,74,0.5); color: var(--text); }
+  .day-btn.active { background: rgba(200,168,74,0.12); color: var(--accent); border-color: rgba(200,168,74,0.6); }
+  .day-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .strip-div { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; margin: 0 0.2rem; }
 
-    .page-header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      color: var(--accent);
-    }
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
-    .page-header .subtitle {
-      font-size: 0.65rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
+  /* ── MAP ── */
+  .map-wrap { flex: 1; position: relative; min-height: 0; }
+  #map { width: 100%; height: 100%; }
 
-    .back-link {
-      margin-left: auto;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--accent); }
+  /* ── DAY INFO OVERLAY ── */
+  .info-overlay {
+    position: absolute; top: 1rem; right: 1rem; z-index: 1000;
+    background: rgba(7,16,26,0.88); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.7rem 1rem;
+    backdrop-filter: blur(4px);
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    display: none;
+  }
+  .info-overlay.visible { opacity: 1; display: block; }
+  .ov-day { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--accent); font-weight: 700; margin-bottom: 0.2rem; }
+  .ov-route { font-size: 0.78rem; color: var(--text); margin-bottom: 0.15rem; }
+  .ov-stat { color: var(--text-muted); font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.05em; }
 
-    /* ─── EXPERIMENT SECTIONS ─────────────────────────────────────────────────── */
-    .experiments {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 4rem;
-      display: flex;
-      flex-direction: column;
-      gap: 3.5rem;
-    }
+  /* ── ELEVATION PANEL ── */
+  .elev-panel {
+    flex-shrink: 0; max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, border-color 0.3s;
+    border-top: 1px solid transparent; background: var(--bg-deep);
+  }
+  .elev-panel.open { max-height: 172px; border-top-color: var(--border); }
+  .elev-inner { height: 172px; display: flex; flex-direction: column; }
 
-    .experiment {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      background: var(--surface);
-    }
+  .elev-hdr {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.45rem 1.5rem 0.2rem; flex-shrink: 0;
+  }
+  .elev-title { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent); letter-spacing: 0.08em; font-weight: 700; }
+  .elev-stat { font-family: 'Space Mono', monospace; font-size: 0.56rem; color: var(--text-muted); letter-spacing: 0.06em; }
+  .elev-cursor-info { margin-left: auto; font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--text); min-width: 180px; text-align: right; }
 
-    .experiment-header {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+  .elev-canvas-wrap { flex: 1; padding: 0 1.5rem 0.5rem; min-height: 0; }
+  #elev-canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
 
-    .experiment-name {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-    }
+  /* ── LEAFLET OVERRIDES ── */
+  .leaflet-container { background: #07101a; }
+  .leaflet-popup-content-wrapper {
+    background: var(--surface) !important; color: var(--text) !important;
+    border: 1px solid var(--border) !important; border-radius: 4px !important;
+    font-family: 'Raleway', sans-serif !important; font-size: 0.8rem !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  }
+  .leaflet-popup-tip { background: var(--surface) !important; }
 
-    .experiment-label {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+  @media (max-width: 640px) {
+    .subtitle { display: none; }
+    .elev-panel.open { max-height: 148px; }
+    .elev-inner { height: 148px; }
+  }
+</style>
 
-    .experiment-desc {
-      margin-left: auto;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-      max-width: 340px;
-      text-align: right;
-    }
-
-    .map-container {
-      height: 460px;
-      width: 100%;
-    }
-
-    .map-stats {
-      padding: 0.85rem 1.5rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-
-    .map-stats span { color: var(--accent); }
-
-    /* ─── LOADING STATE ───────────────────────────────────────────────────────── */
-    .map-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      background: var(--bg-deep);
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      gap: 0.5rem;
-    }
-
-    /* ─── ERROR STATE ─────────────────────────────────────────────────────────── */
-    .map-error {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      background: var(--bg-deep);
-      color: #e07070;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* ─── LEAFLET POPUP OVERRIDES ─────────────────────────────────────────────── */
-    .leaflet-popup-content-wrapper {
-      background: var(--surface) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 4px !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-      font-family: 'Raleway', system-ui, sans-serif !important;
-      font-size: 0.85rem !important;
-    }
-    .leaflet-popup-tip {
-      background: var(--surface) !important;
-    }
-    .leaflet-popup-content strong {
-      color: var(--accent);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.8rem;
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-
-    /* ─── DAY SELECTOR ────────────────────────────────────────────────────────── */
-    .day-selector {
-      padding: 1.5rem 1.5rem 0;
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .day-selector-label {
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-right: 0.25rem;
-    }
-
-    .day-btn {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.3rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      background: var(--bg-deep);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      letter-spacing: 0.06em;
-    }
-    .day-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .day-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-    .day-btn:disabled { opacity: 0.35; cursor: default; }
-
-    @media (max-width: 600px) {
-      .map-container { height: 320px; }
-      .experiment-desc { display: none; }
-    }
-  </style>
-
-<!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
+<!-- HEADER -->
 <header class="page-header">
-  <h1>Tile Styles</h1>
-  <span class="subtitle">Map tile sampler</span>
-  <MapNav current="mapbook" />
+  <h1>Map Book</h1>
+  <span class="subtitle">Philadelphia → California · 9 days · 3,753 mi</span>
+  <a href="/" id="back-link" class="back-link">← The Road</a>
 </header>
 
-<!-- ─── EXPERIMENTS ──────────────────────────────────────────────────────────── -->
-<div class="experiments">
-
-  <!-- Experiment 1: Carto Dark Matter -->
-  <div class="experiment" id="exp-dark">
-    <div class="experiment-header">
-      <span class="experiment-name">01</span>
-      <span class="experiment-label">Carto Dark Matter</span>
-      <span class="experiment-desc">Dark base tiles. Track pops in cyan. Matches the site's night palette.</span>
-    </div>
-    <div id="map-dark" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-dark">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 2: Carto Voyager -->
-  <div class="experiment" id="exp-voyager">
-    <div class="experiment-header">
-      <span class="experiment-name">02</span>
-      <span class="experiment-label">Carto Voyager</span>
-      <span class="experiment-desc">Colorful, detailed streets. Good for reading city names and highway labels.</span>
-    </div>
-    <div id="map-voyager" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-voyager">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 3: Carto Positron -->
-  <div class="experiment" id="exp-light">
-    <div class="experiment-header">
-      <span class="experiment-name">03</span>
-      <span class="experiment-label">Carto Positron</span>
-      <span class="experiment-desc">Clean, minimal light base. Track and markers stand out clearly.</span>
-    </div>
-    <div id="map-light" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-light">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 4: OpenTopoMap -->
-  <div class="experiment" id="exp-topo">
-    <div class="experiment-header">
-      <span class="experiment-name">04</span>
-      <span class="experiment-label">OpenTopoMap</span>
-      <span class="experiment-desc">Terrain + elevation contours. Shows the mountains and elevation change en route.</span>
-    </div>
-    <div id="map-topo" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-topo">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 5: OSM Standard -->
-  <div class="experiment" id="exp-watercolor">
-    <div class="experiment-header">
-      <span class="experiment-name">05</span>
-      <span class="experiment-label">OSM Standard</span>
-      <span class="experiment-desc">The classic OpenStreetMap style. Every road, town, and trail — the world as volunteers mapped it.</span>
-    </div>
-    <div id="map-watercolor" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-watercolor">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 6: USGS Topo -->
-  <div class="experiment" id="exp-toner">
-    <div class="experiment-header">
-      <span class="experiment-name">06</span>
-      <span class="experiment-label">USGS Topo</span>
-      <span class="experiment-desc">US Geological Survey topographic map. Contour lines, terrain shading, elevation. The country laid bare.</span>
-    </div>
-    <div id="map-toner" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-toner">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 7: ESRI NatGeo -->
-  <div class="experiment" id="exp-natgeo">
-    <div class="experiment-header">
-      <span class="experiment-name">07</span>
-      <span class="experiment-label">ESRI NatGeo</span>
-      <span class="experiment-desc">National Geographic cartographic style. Classic atlas feel — closest to the site's hand-drawn maps.</span>
-    </div>
-    <div id="map-natgeo" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-natgeo">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
-  <!-- Experiment 8: ESRI Satellite -->
-  <div class="experiment" id="exp-satellite">
-    <div class="experiment-header">
-      <span class="experiment-name">08</span>
-      <span class="experiment-label">ESRI World Imagery</span>
-      <span class="experiment-desc">Satellite. The actual ground you drove over — Appalachians, piedmont, coastal plain.</span>
-    </div>
-    <div id="map-satellite" class="map-container">
-      <div class="map-loading">Loading route…</div>
-    </div>
-    <div class="map-stats" id="stats-satellite">
-      <div>Track loading…</div>
-    </div>
-  </div>
-
+<!-- DAY STRIP -->
+<div class="day-strip" id="day-strip">
+  <button class="day-btn active" data-day="0">Overview</button>
+  <div class="strip-div"></div>
+  <button class="day-btn" data-day="1"><span class="dot" style="background:#7ebcd6"></span>Day 1</button>
+  <button class="day-btn" data-day="2"><span class="dot" style="background:#a0c8e8"></span>Day 2</button>
+  <button class="day-btn" data-day="3"><span class="dot" style="background:#e8b870"></span>Day 3</button>
+  <button class="day-btn" data-day="4"><span class="dot" style="background:#e89050"></span>Day 4</button>
+  <button class="day-btn" data-day="5"><span class="dot" style="background:#d47044"></span>Day 5</button>
+  <button class="day-btn" data-day="6"><span class="dot" style="background:#c85848"></span>Day 6</button>
+  <button class="day-btn" data-day="7"><span class="dot" style="background:#b85860"></span>Day 7</button>
+  <button class="day-btn" data-day="8"><span class="dot" style="background:#c8a84a"></span>Day 8</button>
+  <button class="day-btn" data-day="9"><span class="dot" style="background:#8cd6a8"></span>Day 9</button>
 </div>
 
-<!-- ─── SCRIPTS ──────────────────────────────────────────────────────────────── -->
+<!-- MAIN -->
+<div class="main">
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="info-overlay" id="info-overlay">
+      <div class="ov-day" id="ov-day"></div>
+      <div class="ov-route" id="ov-route"></div>
+      <div class="ov-stat" id="ov-stat"></div>
+    </div>
+  </div>
+
+  <div class="elev-panel" id="elev-panel">
+    <div class="elev-inner">
+      <div class="elev-hdr">
+        <span class="elev-title" id="elev-title"></span>
+        <span class="elev-stat" id="elev-stat"></span>
+        <span class="elev-cursor-info" id="elev-cursor-info"></span>
+      </div>
+      <div class="elev-canvas-wrap">
+        <canvas id="elev-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
 <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script is:inline src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
 
 <script is:inline>
-  const GPX_URL = '/maps/Day 1 - Philly to Charlotte.gpx';
+// ── DATA ───────────────────────────────────────────────────────────────────
+const DAYS = [
+  { num:1, date:'Jan 30', from:'Philadelphia, PA', to:'Charlotte, NC',   miles:510, color:'#7ebcd6', gpx:'/maps/Day 1 - Philly to Charlotte.gpx' },
+  { num:2, date:'Jan 31', from:'Charlotte, NC',    to:'Montgomery, AL',  miles:400, color:'#a0c8e8', gpx:'/maps/Day 2 - Charlotte NC to Montgomery AL.gpx' },
+  { num:3, date:'Feb 1',  from:'Montgomery, AL',   to:'Jackson, MS',     miles:245, color:'#e8b870', gpx:'/maps/Day 3 - Montgomery AL to Jackson MS.gpx' },
+  { num:4, date:'Feb 2',  from:'Jackson, MS',      to:'Austin, TX',      miles:550, color:'#e89050', gpx:'/maps/Day 4 - Jackson MS to Austin TX.gpx' },
+  { num:5, date:'Feb 3',  from:'Austin, TX',       to:'Terlingua, TX',   miles:487, color:'#d47044', gpx:'/maps/Day 5 - Austin TX to Terilingua TX.gpx' },
+  { num:6, date:'Feb 4',  from:'Terlingua, TX',    to:'Big Bend NP',     miles:121, color:'#c85848', gpx:'/maps/Day 6 - Big Bend National Park.gpx' },
+  { num:7, date:'Feb 5',  from:'Big Bend NP',      to:'Terlingua, TX',   miles:133, color:'#b85860', gpx:'/maps/Day 7 - Big Bend National Park.gpx' },
+  { num:8, date:'Feb 6',  from:'Terlingua, TX',    to:'Tucson, AZ',      miles:636, color:'#c8a84a', gpx:'/maps/Day 8 - Terilingua TX to Tucson AZ.gpx' },
+  { num:9, date:'Feb 7',  from:'Tucson, AZ',       to:'Los Angeles, CA', miles:490, color:'#8cd6a8', gpx:'/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx' },
+];
 
-  const CONFIGS = [
-    {
-      id: 'dark',
-      tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      trackColor: '#7ebcd6',
-      startColor: '#4adf8a',
-      endColor: '#e05555',
-    },
-    {
-      id: 'voyager',
-      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      trackColor: '#d63b3b',
-      startColor: '#2266dd',
-      endColor: '#dd2222',
-    },
-    {
-      id: 'light',
-      tiles: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      trackColor: '#0055cc',
-      startColor: '#229922',
-      endColor: '#cc2222',
-    },
-    {
-      id: 'topo',
-      tiles: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
-      trackColor: '#cc3300',
-      startColor: '#0055cc',
-      endColor: '#cc0000',
-    },
-    {
-      id: 'watercolor',
-      tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      trackColor: '#e63946',
-      startColor: '#2a9d8f',
-      endColor: '#e76f51',
-      noSubdomains: true,
-    },
-    {
-      id: 'toner',
-      tiles: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
-      attribution: 'USGS The National Map: National Boundaries Dataset, 3DEP Elevation Program, Geographic Names Information System, National Hydrography Dataset, National Land Cover Database, National Structures Dataset, National Transportation Dataset',
-      trackColor: '#c8a84a',
-      startColor: '#22aa22',
-      endColor: '#cc2200',
-      noSubdomains: true,
-    },
-    {
-      id: 'natgeo',
-      tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
-      attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
-      trackColor: '#8b1a2e',
-      startColor: '#1a4a8b',
-      endColor: '#8b1a1a',
-      noSubdomains: true,
-    },
-    {
-      id: 'satellite',
-      tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-      trackColor: '#ffdd00',
-      startColor: '#00ddff',
-      endColor: '#ff4400',
-      noSubdomains: true,
-    },
-  ];
+// ── MAP INIT ───────────────────────────────────────────────────────────────
+const map = L.map('map', { scrollWheelZoom: true, zoomControl: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  maxZoom: 18, subdomains: 'abcd',
+}).addTo(map);
 
-  function makeDotIcon(color) {
-    return L.divIcon({
-      className: '',
-      html: `<div style="
-        width:12px; height:12px; border-radius:50%;
-        background:${color}; border:2px solid #fff;
-        box-shadow:0 1px 4px rgba(0,0,0,0.6);
-      "></div>`,
-      iconSize: [12, 12],
-      iconAnchor: [6, 6],
-    });
-  }
+// ── STATE ──────────────────────────────────────────────────────────────────
+const st = {
+  active: null,
+  layers: {},       // dayNum → L.GPX
+  bounds: {},       // dayNum → L.LatLngBounds
+  allBounds: null,
+  elevCache: {},    // dayNum → [{lat,lon,eleFt,distMi}]
+  hoverMark: null,
+  loadedCount: 0,
+  drawPts: null,    // downsampled pts for current canvas
+  allPts: null,     // full pts for current day
+  dayColor: null,
+};
 
-  function metersToMiles(m) {
-    return (m * 0.000621371).toFixed(1);
-  }
-
-  function updateStats(id, gpxLayer) {
-    const el = document.getElementById(`stats-${id}`);
-    if (!el) return;
-    try {
-      const dist = metersToMiles(gpxLayer.get_distance());
-      const pts = gpxLayer.get_elevation_data ? gpxLayer.get_elevation_data().length : '—';
-      const start = gpxLayer.get_start_time ? gpxLayer.get_start_time() : null;
-      const end = gpxLayer.get_end_time ? gpxLayer.get_end_time() : null;
-      const duration = (start && end)
-        ? (() => {
-            const ms = new Date(end) - new Date(start);
-            const h = Math.floor(ms / 3600000);
-            const m = Math.floor((ms % 3600000) / 60000);
-            return `${h}h ${m}m`;
-          })()
-        : '—';
-      el.innerHTML = `
-        <div>Distance: <span>${dist} mi</span></div>
-        <div>Track points: <span>${pts === '—' ? '—' : pts.toLocaleString()}</span></div>
-        <div>Duration: <span>${duration}</span></div>
-      `;
-    } catch {
-      el.innerHTML = '<div>Track loaded.</div>';
-    }
-  }
-
-  CONFIGS.forEach(cfg => {
-    const container = document.getElementById(`map-${cfg.id}`);
-    if (!container) return;
-
-    // Remove loading overlay
-    container.innerHTML = '';
-
-    const map = L.map(`map-${cfg.id}`, { scrollWheelZoom: false });
-
-    L.tileLayer(cfg.tiles, {
-      attribution: cfg.attribution,
-      maxZoom: 18,
-      ...(cfg.noSubdomains ? {} : { subdomains: 'abcd' }),
-    }).addTo(map);
-
-    const gpxLayer = new L.GPX(GPX_URL, {
-      async: true,
-      marker_options: {
-        startIconUrl: null,
-        endIconUrl: null,
-        shadowUrl: null,
-        wptIconUrls: { '': null },
-      },
-      polyline_options: {
-        color: cfg.trackColor,
-        weight: 3,
-        opacity: 0.9,
-        lineCap: 'round',
-        lineJoin: 'round',
-      },
-    });
-
-    gpxLayer.on('loaded', function(e) {
-      map.fitBounds(e.target.getBounds(), { padding: [32, 32] });
-      updateStats(cfg.id, e.target);
-
-      // Add custom start/end markers
-      const startLatLng = e.target.get_start_pt ? e.target.get_start_pt() : null;
-      const endLatLng = e.target.get_end_pt ? e.target.get_end_pt() : null;
-
-      if (startLatLng) {
-        L.marker(startLatLng, { icon: makeDotIcon(cfg.startColor) })
-          .bindPopup('<strong>Start</strong>Philadelphia, PA')
-          .addTo(map);
-      }
-      if (endLatLng) {
-        L.marker(endLatLng, { icon: makeDotIcon(cfg.endColor) })
-          .bindPopup('<strong>End</strong>Charlotte, NC')
-          .addTo(map);
-      }
-    });
-
-    gpxLayer.on('error', function() {
-      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#e07070;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">Failed to load GPX track</div>';
-    });
-
-    gpxLayer.addTo(map);
+// ── OPACITY CONTROL ───────────────────────────────────────────────────────
+function setOpacity(activeNum) {
+  DAYS.forEach(d => {
+    const layer = st.layers[d.num];
+    if (!layer) return;
+    const on = activeNum === null || d.num === activeNum;
+    layer.setStyle({ opacity: on ? 0.88 : 0.1, weight: on ? 3.5 : 1.5 });
+    if (on) layer.bringToFront();
   });
+}
+
+// ── HOVER MARKER ──────────────────────────────────────────────────────────
+function getHoverMark() {
+  if (!st.hoverMark) {
+    st.hoverMark = L.marker([0, 0], {
+      icon: L.divIcon({
+        className: '',
+        html: '<div style="width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid #c8a84a;box-shadow:0 0 8px rgba(200,168,74,0.7);pointer-events:none"></div>',
+        iconSize: [10, 10], iconAnchor: [5, 5],
+      }),
+      zIndexOffset: 9999,
+    });
+  }
+  return st.hoverMark;
+}
+
+// ── GPX ELEVATION PARSER ─────────────────────────────────────────────────
+function haversineM(a, b) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dlat = (b.lat - a.lat) * rad, dlon = (b.lon - a.lon) * rad;
+  const s = Math.sin(dlat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dlon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+async function loadElev(day) {
+  if (st.elevCache[day.num]) return st.elevCache[day.num];
+  const text = await fetch(day.gpx).then(r => r.text());
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const trkpts = [...doc.getElementsByTagName('trkpt')];
+  let distM = 0;
+  const pts = [];
+  for (let i = 0; i < trkpts.length; i++) {
+    const p = trkpts[i];
+    const lat = +p.getAttribute('lat'), lon = +p.getAttribute('lon');
+    const eleEl = p.getElementsByTagName('ele')[0];
+    const eleFt = eleEl ? +eleEl.textContent * 3.28084 : 0;
+    if (i > 0) distM += haversineM(pts[i - 1], { lat, lon });
+    pts.push({ lat, lon, eleFt, distMi: distM / 1609.34 });
+  }
+  st.elevCache[day.num] = pts;
+  return pts;
+}
+
+function downsample(pts, n) {
+  if (pts.length <= n) return pts;
+  const step = (pts.length - 1) / (n - 1);
+  return Array.from({ length: n }, (_, i) => pts[Math.round(i * step)]);
+}
+
+// ── CANVAS ELEVATION ─────────────────────────────────────────────────────
+const PAD = { l: 48, r: 14, t: 8, b: 20 };
+
+function hexRgba(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function renderCanvas(drawPts, color, hoverIdx) {
+  const canvas = document.getElementById('elev-canvas');
+  if (!canvas || !drawPts || !drawPts.length) return;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  if (!W || !H) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const minE = Math.min(...drawPts.map(p => p.eleFt));
+  const maxE = Math.max(...drawPts.map(p => p.eleFt));
+  const maxD = drawPts[drawPts.length - 1].distMi;
+  const eRange = (maxE - minE) || 1;
+  const w = W - PAD.l - PAD.r;
+  const h = H - PAD.t - PAD.b;
+  const xOf = d => PAD.l + (d / maxD) * w;
+  const yOf = e => PAD.t + h - ((e - minE) / eRange) * h;
+
+  // Grid + y-axis labels
+  ctx.font = `9px "Space Mono", monospace`;
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 4; i++) {
+    const e = minE + eRange * i / 4;
+    const y = yOf(e);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y);
+    ctx.strokeStyle = 'rgba(30,46,64,0.9)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(138,126,106,0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(e / 100) * 100 + "'", PAD.l - 5, y);
+  }
+
+  // Area fill
+  ctx.beginPath();
+  ctx.moveTo(xOf(drawPts[0].distMi), H - PAD.b);
+  drawPts.forEach(p => ctx.lineTo(xOf(p.distMi), yOf(p.eleFt)));
+  ctx.lineTo(xOf(maxD), H - PAD.b);
+  ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, PAD.t, 0, H - PAD.b);
+  fillGrad.addColorStop(0, hexRgba(color, 0.3));
+  fillGrad.addColorStop(1, hexRgba(color, 0.03));
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // Elevation line
+  ctx.beginPath();
+  drawPts.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(xOf(p.distMi), yOf(p.eleFt));
+    else ctx.lineTo(xOf(p.distMi), yOf(p.eleFt));
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.stroke();
+
+  // Distance ticks
+  ctx.fillStyle = 'rgba(138,126,106,0.65)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  const tickStep = maxD > 300 ? 100 : maxD > 150 ? 50 : maxD > 60 ? 25 : 10;
+  for (let d = 0; d <= maxD; d += tickStep) {
+    ctx.fillText(d + 'mi', xOf(d), H - 2);
+  }
+
+  // Hover cursor
+  if (hoverIdx != null && hoverIdx >= 0 && hoverIdx < drawPts.length) {
+    const p = drawPts[hoverIdx];
+    const cx = xOf(p.distMi), cy = yOf(p.eleFt);
+    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, H - PAD.b);
+    ctx.strokeStyle = hexRgba(color, 0.5); ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+}
+
+// ── BINARY SEARCH ─────────────────────────────────────────────────────────
+function bsearch(pts, targetDist) {
+  let lo = 0, hi = pts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (pts[mid].distMi < targetDist) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+// ── CANVAS HOVER ──────────────────────────────────────────────────────────
+function onCanvasMove(e) {
+  const canvas = e.currentTarget;
+  const { drawPts, dayColor } = st;
+  if (!drawPts || !drawPts.length) return;
+  const rect = canvas.getBoundingClientRect();
+  const maxD = drawPts[drawPts.length - 1].distMi;
+  const w = rect.width - PAD.l - PAD.r;
+  const xRatio = (e.clientX - rect.left - PAD.l) / w;
+  if (xRatio < 0 || xRatio > 1) { onCanvasLeave(); return; }
+
+  const idx = bsearch(drawPts, xRatio * maxD);
+  const pt = drawPts[idx];
+  renderCanvas(drawPts, dayColor, idx);
+
+  document.getElementById('elev-cursor-info').textContent =
+    `${pt.distMi.toFixed(1)} mi  ·  ${Math.round(pt.eleFt).toLocaleString()} ft`;
+
+  const mark = getHoverMark();
+  mark.setLatLng([pt.lat, pt.lon]);
+  if (!map.hasLayer(mark)) mark.addTo(map);
+}
+
+function onCanvasLeave() {
+  if (st.drawPts) renderCanvas(st.drawPts, st.dayColor, null);
+  document.getElementById('elev-cursor-info').textContent = '';
+  if (st.hoverMark && map.hasLayer(st.hoverMark)) st.hoverMark.remove();
+}
+
+document.getElementById('elev-canvas').addEventListener('mousemove', onCanvasMove);
+document.getElementById('elev-canvas').addEventListener('mouseleave', onCanvasLeave);
+
+// ── SELECT DAY ────────────────────────────────────────────────────────────
+async function selectDay(num) {
+  st.active = num;
+
+  // Button highlight
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-day="${num}"]`)?.classList.add('active');
+
+  const panel = document.getElementById('elev-panel');
+
+  if (num === 0) {
+    // Overview
+    setOpacity(null);
+    const wasOpen = panel.classList.contains('open');
+    panel.classList.remove('open');
+    document.getElementById('info-overlay').classList.remove('visible');
+    if (st.hoverMark && map.hasLayer(st.hoverMark)) st.hoverMark.remove();
+    if (wasOpen) {
+      // Wait for panel close transition, then invalidate + fly
+      setTimeout(() => {
+        map.invalidateSize(false);
+        if (st.allBounds && st.active === 0) map.flyToBounds(st.allBounds, { padding: [40, 40], duration: 0.8 });
+      }, 320);
+    } else {
+      if (st.allBounds) map.flyToBounds(st.allBounds, { padding: [40, 40], duration: 0.8 });
+    }
+    return;
+  }
+
+  const day = DAYS.find(d => d.num === num);
+  if (!day) return;
+
+  // Track
+  setOpacity(num);
+
+  // Info overlay
+  document.getElementById('ov-day').textContent = `Day ${num}  ·  ${day.date}`;
+  document.getElementById('ov-route').textContent = `${day.from} → ${day.to}`;
+  document.getElementById('ov-stat').textContent = `${day.miles} mi (GPS)`;
+  document.getElementById('info-overlay').classList.add('visible');
+
+  // Elevation panel — open and decide when to fly
+  const panelWasOpen = panel.classList.contains('open');
+  panel.classList.add('open');
+  document.getElementById('elev-title').textContent = `Day ${num}  ·  ${day.from} → ${day.to}`;
+  document.getElementById('elev-stat').textContent = 'Loading…';
+  document.getElementById('elev-cursor-info').textContent = '';
+  st.drawPts = null; st.allPts = null; st.dayColor = day.color;
+
+  // Fly to day bounds — after panel is at final height
+  if (panelWasOpen) {
+    // Panel already open: invalidate immediately and fly
+    map.invalidateSize(false);
+    if (st.bounds[num]) map.flyToBounds(st.bounds[num], { padding: [40, 40], duration: 0.8 });
+  } else {
+    // Panel is opening: wait for 300ms transition to complete
+    setTimeout(() => {
+      map.invalidateSize(false);
+      if (st.bounds[num] && st.active === num) map.flyToBounds(st.bounds[num], { padding: [40, 40], duration: 0.8 });
+    }, 320);
+  }
+
+  // Load elevation
+  const allPts = await loadElev(day);
+  // Only update if still the active day
+  if (st.active !== num) return;
+
+  const maxE = Math.max(...allPts.map(p => p.eleFt));
+  const minE = Math.min(...allPts.map(p => p.eleFt));
+  const maxD = allPts[allPts.length - 1].distMi;
+
+  document.getElementById('elev-stat').textContent =
+    `${allPts.length.toLocaleString()} pts  ·  peak ${Math.round(maxE).toLocaleString()}'  ·  base ${Math.round(minE).toLocaleString()}'  ·  ${maxD.toFixed(1)} mi`;
+
+  const drawPts = downsample(allPts, 700);
+  st.drawPts = drawPts;
+  st.allPts = allPts;
+  renderCanvas(drawPts, day.color, null);
+}
+
+// ── LOAD ALL TRACKS ───────────────────────────────────────────────────────
+const allBoundsArr = [];
+DAYS.forEach(day => {
+  const gpxLayer = new L.GPX(day.gpx, {
+    async: true,
+    marker_options: {
+      startIconUrl: null, endIconUrl: null,
+      shadowUrl: null, wptIconUrls: { '': null },
+    },
+    polyline_options: {
+      color: day.color, weight: 2, opacity: 0.65,
+      lineCap: 'round', lineJoin: 'round',
+    },
+  });
+
+  gpxLayer.on('loaded', function(e) {
+    st.layers[day.num] = gpxLayer;
+    const b = e.target.getBounds();
+    st.bounds[day.num] = b;
+    allBoundsArr.push(b);
+    st.loadedCount++;
+
+    if (st.loadedCount === DAYS.length) {
+      // Clone first bounds so L.LatLngBounds.extend() mutation doesn't corrupt st.bounds[day]
+      let combined = L.latLngBounds(allBoundsArr[0].getSouthWest(), allBoundsArr[0].getNorthEast());
+      for (let i = 1; i < allBoundsArr.length; i++) combined.extend(allBoundsArr[i]);
+      st.allBounds = combined;
+
+      // Honor ?day= URL param
+      const urlDay = parseInt(new URLSearchParams(location.search).get('day') || '0');
+      if (urlDay >= 1 && urlDay <= 9) {
+        // Instant fit (no animation) so flyToBounds in selectDay has a clean slate
+        map.fitBounds(combined, { padding: [40, 40], animate: false });
+        selectDay(urlDay);
+      } else {
+        map.fitBounds(combined, { padding: [40, 40] });
+      }
+    }
+  });
+
+  gpxLayer.on('error', () => { st.loadedCount++; });
+  gpxLayer.addTo(map);
+});
+
+// ── BACK LINK ─────────────────────────────────────────────────────────────
+(function() {
+  const urlDay = parseInt(new URLSearchParams(location.search).get('day') || '0');
+  const link = document.getElementById('back-link');
+  if (urlDay >= 1 && urlDay <= 9) {
+    link.href = `/days/${urlDay}`;
+    link.textContent = `← Day ${urlDay}`;
+  }
+})();
+
+// ── BUTTON CLICKS ─────────────────────────────────────────────────────────
+document.getElementById('day-strip').addEventListener('click', e => {
+  const btn = e.target.closest('.day-btn');
+  if (!btn) return;
+  const num = parseInt(btn.dataset.day);
+  // Update URL without page reload
+  const url = new URL(location.href);
+  if (num === 0) url.searchParams.delete('day');
+  else url.searchParams.set('day', num);
+  history.replaceState(null, '', url);
+  selectDay(num);
+});
 </script>
 </MapBase>
