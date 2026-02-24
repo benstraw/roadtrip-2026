@@ -690,6 +690,33 @@ const elevRange = maxElev - minElev;
     color: var(--text-muted);
   }
 
+  /* ── DAY TABLE WRAPPER ── */
+  .day-table-wrap { overflow-x: auto; }
+
+  /* ── TABLE TOTALS ROW ── */
+  .totals-row { background: var(--bg-deep); }
+  .totals-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    padding: 0.85rem 1rem;
+  }
+  .totals-miles {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-align: right;
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+  }
+  .totals-note {
+    font-family: 'Caveat', cursive;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.85rem 1rem;
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
     .highway-row {
@@ -1025,7 +1052,7 @@ const elevRange = maxElev - minElev;
     <h2 class="section-title">The Route</h2>
     <p class="section-desc">Day-by-day. Nine legs. One truck.</p>
 
-    <div style="overflow-x: auto;">
+    <div class="day-table-wrap">
       <table class="day-table">
         <thead>
           <tr>
@@ -1050,16 +1077,10 @@ const elevRange = maxElev - minElev;
               <td class="td-tagline">{d.tagline}</td>
             </tr>
           ))}
-          <tr style="background: var(--bg-deep)">
-            <td colspan="3" style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); padding: 0.85rem 1rem;">
-              Route total (point-to-point estimates)
-            </td>
-            <td class="td-miles" style="color: var(--accent); font-weight: 700;">
-              {tripTotals.miles.toLocaleString()}
-            </td>
-            <td colspan="2" style="font-family: 'Caveat', cursive; font-size: 0.8rem; color: var(--text-muted); padding: 0.85rem 1rem;">
-              {tripTotals.odometerMiles.toLocaleString()} mi odometer-verified
-            </td>
+          <tr class="totals-row">
+            <td colspan="3" class="totals-label">Route total (point-to-point estimates)</td>
+            <td class="totals-miles">{tripTotals.miles.toLocaleString()}</td>
+            <td colspan="2" class="totals-note">{tripTotals.odometerMiles.toLocaleString()} mi odometer-verified</td>
           </tr>
         </tbody>
       </table>
