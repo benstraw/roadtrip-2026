@@ -41,6 +41,12 @@ export interface GalleryImage {
   video?: boolean; // render as <video> in grid and lightbox
 }
 
+export interface MapLabel {
+  lat: number;
+  lng: number;
+  text: string;
+}
+
 export interface Day {
   day: number;
   slug: string;
@@ -62,6 +68,7 @@ export interface Day {
   galleryImages: GalleryImage[];
   music?: MusicEmbed;
   gpxUrl?: string;
+  mapLabels?: MapLabel[];
 }
 
 // ─── THEMES ──────────────────────────────────────────────────────────────────
@@ -550,6 +557,12 @@ export const days: Day[] = [
       { src: '/images/days/6/20260204_230915-terilingua-sky-airbnb-night-sky-2.jpg', alt: 'Night sky over Terlingua', caption: 'No light. No ceiling. Just this.', wide: true },
     ],
     gpxUrl: '/maps/Day 6 - Big Bend National Park.gpx',
+    mapLabels: [
+      { lat: 29.175, lng: -102.921, text: 'Boquillas Canyon' },
+      { lat: 29.2705, lng: -103.3050, text: 'Chisos Mtn Lodge' },
+      { lat: 29.3237, lng: -103.1928, text: 'Panther Junction' },
+      { lat: 29.3312, lng: -103.6213, text: 'Terlingua Sky Airbnb' },
+    ],
   },
   {
     day: 7,
@@ -637,6 +650,12 @@ export const days: Day[] = [
       { src: '/images/days/7/20260205_232958-terilingua-sky-night-4.jpg', alt: 'Night sky over Terlingua', caption: 'No light for miles in any direction.' },
     ],
     gpxUrl: '/maps/Day 7 - Big Bend National Park.gpx',
+    mapLabels: [
+      { lat: 29.3237, lng: -103.1928, text: 'Panther Junction' },
+      { lat: 29.2705, lng: -103.3050, text: 'Chisos Mtn Lodge' },
+      { lat: 29.1333, lng: -103.5143, text: 'Santa Elena Canyon' },
+      { lat: 29.3312, lng: -103.6213, text: 'Terlingua Sky Airbnb' },
+    ],
   },
   {
     day: 8,

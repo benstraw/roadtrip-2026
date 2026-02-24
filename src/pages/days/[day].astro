@@ -601,7 +601,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   <div class="hero-bg-grad" aria-hidden="true"></div>
 
   {day.gpxUrl
-    ? <div id="day-hero-map" data-gpx={day.gpxUrl} data-day={day.day} aria-hidden="true"></div>
+    ? <div id="day-hero-map" data-gpx={day.gpxUrl} data-day={day.day} data-labels={JSON.stringify(day.mapLabels ?? [])} aria-hidden="true"></div>
     : <div class="hero-texture" aria-hidden="true"></div>
   }
 
@@ -800,6 +800,11 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
         maxZoom: 16,
       }).addTo(heroMap);
 
+      L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        opacity: 0.6,
+      }).addTo(heroMap);
+
       heroMap.setView([36.5, -95], 4);
 
       var layer = new L.GPX(gpxUrl, {
@@ -807,8 +812,36 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
         marker_options: { startIconUrl: null, endIconUrl: null, shadowUrl: null, wptIconUrls: { '': null } },
         polyline_options: { color: color, weight: 4, opacity: 1, lineCap: 'round', lineJoin: 'round' },
       });
+      var customLabels = [];
+      try { customLabels = JSON.parse(el.dataset.labels || '[]'); } catch(e) {}
+
       layer.on('loaded', function(e) {
-        heroMap.fitBounds(e.target.getBounds(), { padding: [80, 80], animate: false });
+        var bounds = e.target.getBounds();
+        customLabels.forEach(function(lbl) { bounds.extend([lbl.lat, lbl.lng]); });
+        heroMap.fitBounds(bounds, { padding: [80, 80], animate: false });
+        customLabels.forEach(function(lbl) {
+          var icon = L.divIcon({
+            className: '',
+            html: '<div style="'
+              + 'background:rgba(255,255,255,0.82);'
+              + 'color:#111;'
+              + 'font-family:\'Space Mono\',monospace;'
+              + 'font-size:9px;'
+              + 'font-weight:700;'
+              + 'letter-spacing:0.07em;'
+              + 'text-transform:uppercase;'
+              + 'padding:3px 7px;'
+              + 'border-radius:2px;'
+              + 'border:1px solid rgba(0,0,0,0.25);'
+              + 'white-space:nowrap;'
+              + 'pointer-events:none;'
+              + 'transform:translate(-50%,-50%);'
+              + '">' + lbl.text + '</div>',
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          });
+          L.marker([lbl.lat, lbl.lng], { icon: icon, interactive: false }).addTo(heroMap);
+        });
       });
       layer.addTo(heroMap);
     })();
