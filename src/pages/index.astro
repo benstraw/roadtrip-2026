@@ -5,6 +5,7 @@ import { days, tripTotals } from '../data/days';
 ---
 
 <Base title="The Road — Philly to California" description="9 days. 3,753 miles. Philadelphia to California.">
+<link slot="head" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <style>
   /* ── INDEX-SPECIFIC THEME: aged atlas paper ─── */
@@ -23,46 +24,30 @@ import { days, tripTotals } from '../data/days';
 
   /* ─── HERO ─────────────────────────────────────────────────────────────────── */
   .hero {
-    min-height: 100svh;
+    min-height: min(60vh, 520px);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 6vw, 5rem);
+    padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 6vw, 5rem);
     position: relative;
     overflow: hidden;
   }
 
-  .hero-bg {
+  #hero-map {
     position: absolute;
     inset: 0;
-    /* Vintage map grid pattern */
-    background-image:
-      linear-gradient(rgba(200,168,74,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(200,168,74,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-    background-position: center center;
+    z-index: 0;
   }
 
-  /* USA silhouette via gradient blob */
-  .hero-map-blob {
-    position: absolute;
-    right: -5%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 55vw;
-    height: 60vh;
-    background: radial-gradient(ellipse at 40% 50%, rgba(200,168,74,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  /* Animated route line across hero */
-  .hero-route-svg {
+  /* Darken the watercolor tiles slightly so the content box pops */
+  #hero-map::after {
+    content: '';
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
+    background: rgba(0,0,0,0.08);
     pointer-events: none;
+    z-index: 1;
   }
 
   .hero-content {
@@ -71,13 +56,22 @@ import { days, tripTotals } from '../data/days';
     max-width: 680px;
   }
 
+  .hero-content-box {
+    background: rgba(7, 16, 26, 0.72);
+    border: 1px solid rgba(200, 168, 74, 0.32);
+    border-radius: 4px;
+    padding: 1.5rem 2rem;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
   .hero-eyebrow {
     font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -92,10 +86,10 @@ import { days, tripTotals } from '../data/days';
 
   .hero-title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(3rem, 9vw, 7rem);
+    font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 900;
     line-height: 0.92;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.85rem;
     color: var(--text);
   }
 
@@ -107,28 +101,28 @@ import { days, tripTotals } from '../data/days';
 
   .hero-sub {
     font-family: 'Caveat', cursive;
-    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    font-size: clamp(1rem, 2vw, 1.2rem);
     color: var(--text-muted);
-    margin-bottom: 2.5rem;
-    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
   }
 
   .hero-stats {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-stat {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
 
   .hero-stat .val {
     font-family: 'Space Mono', monospace;
-    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-size: clamp(1rem, 2vw, 1.35rem);
     font-weight: 700;
     color: var(--accent);
     line-height: 1;
@@ -158,6 +152,34 @@ import { days, tripTotals } from '../data/days';
 
   .hero-cta:hover { opacity: 0.85; letter-spacing: 0.2em; }
 
+  .hero-secondary-links {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(200, 168, 74, 0.35);
+    padding: 0.55em 1.1em;
+    border-radius: 2px;
+    transition: background 0.2s, border-color 0.2s, letter-spacing 0.2s;
+  }
+
+  .hero-secondary-link:hover {
+    background: rgba(200, 168, 74, 0.1);
+    border-color: rgba(200, 168, 74, 0.65);
+    letter-spacing: 0.18em;
+  }
+
   .scroll-indicator {
     position: absolute;
     bottom: 2rem;
@@ -173,6 +195,7 @@ import { days, tripTotals } from '../data/days';
     letter-spacing: 0.15em;
     text-transform: uppercase;
     animation: bob 2s ease-in-out infinite;
+    z-index: 2;
   }
 
   .scroll-indicator svg { width: 18px; height: 18px; }
@@ -355,64 +378,64 @@ import { days, tripTotals } from '../data/days';
 
 <!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <div class="hero-map-blob" aria-hidden="true"></div>
-
-  <!-- Animated SVG route line across the hero background -->
-  <svg class="hero-route-svg" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
-    <path
-      d="M 100 350 C 200 340, 280 360, 380 320 C 450 290, 500 310, 580 280 C 650 255, 720 270, 800 240 C 870 215, 920 230, 1000 200 C 1050 185, 1100 195, 1150 180"
-      stroke="rgba(200,168,74,0.12)"
-      stroke-width="2"
-      fill="none"
-      stroke-dasharray="10 8"
-    />
-    <!-- State dots along route -->
-    {[
-      [100, 350], [220, 340], [380, 320], [500, 295], [620, 270],
-      [740, 248], [830, 235], [950, 210], [1100, 188]
-    ].map(([x, y], i) => (
-      <circle cx={x} cy={y} r="3" fill="rgba(200,168,74,0.3)" />
-    ))}
-  </svg>
+  <div id="hero-map" aria-hidden="true"></div>
 
   <div class="hero-content animate-fade-up">
-    <p class="hero-eyebrow">
-      <span class="eyebrow-line"></span>
-      Father &amp; Son — Jan 30 – Feb 7, 2025
-    </p>
-    <h1 class="hero-title">
-      The<br/>
-      <em>Road</em>
-    </h1>
-    <p class="hero-sub">
-      Philadelphia to California.<br/>
-      A father, a son, a red Tacoma.<br/>
-      Nine days. Made it.
-    </p>
+    <div class="hero-content-box">
+      <p class="hero-eyebrow">
+        <span class="eyebrow-line"></span>
+        Father &amp; Son — Jan 30 – Feb 7, 2025
+      </p>
+      <h1 class="hero-title">
+        The<br/>
+        <em>Road</em>
+      </h1>
+      <p class="hero-sub">
+        Philadelphia to California.<br/>
+        A father, a son, a red Tacoma.<br/>
+        Nine days. Made it.
+      </p>
 
-    <div class="hero-stats stagger">
-      <div class="hero-stat">
-        <span class="val">{tripTotals.odometerMiles.toLocaleString()}</span>
-        <span class="lbl">total miles</span>
+      <div class="hero-stats stagger">
+        <div class="hero-stat">
+          <span class="val">{tripTotals.odometerMiles.toLocaleString()}</span>
+          <span class="lbl">total miles</span>
+        </div>
+        <div class="hero-stat">
+          <span class="val">{tripTotals.days}</span>
+          <span class="lbl">days</span>
+        </div>
+        <div class="hero-stat">
+          <span class="val">{tripTotals.states.length}</span>
+          <span class="lbl">states</span>
+        </div>
       </div>
-      <div class="hero-stat">
-        <span class="val">{tripTotals.days}</span>
-        <span class="lbl">days</span>
-      </div>
-      <div class="hero-stat">
-        <span class="val">{tripTotals.states.length}</span>
-        <span class="lbl">states</span>
+
+      <a href="#days" class="hero-cta">
+        View the Journey
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </a>
+
+      <div class="hero-secondary-links">
+        <a href="/mapbook" class="hero-secondary-link">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Map Book
+        </a>
+        <a href="/almanac" class="hero-secondary-link">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+          Almanac
+        </a>
       </div>
     </div>
-
-    <a href="#days" class="hero-cta">
-      View the Journey
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="5" y1="12" x2="19" y2="12"/>
-        <polyline points="12,5 19,12 12,19"/>
-      </svg>
-    </a>
   </div>
 
   <div class="scroll-indicator" aria-hidden="true">
@@ -473,6 +496,60 @@ import { days, tripTotals } from '../data/days';
   <small>Philadelphia → California &nbsp;·&nbsp; January 30 – February 7, 2025</small>
   <small><a href="/almanac" class="almanac-link">The Almanac →</a></small>
 </footer>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
+<script is:inline>
+(function() {
+  const HERO_DAYS = [
+    { color:'#7ebcd6', gpx:'/maps/Day 1 - Philly to Charlotte.gpx' },
+    { color:'#a0c8e8', gpx:'/maps/Day 2 - Charlotte NC to Montgomery AL.gpx' },
+    { color:'#e8b870', gpx:'/maps/Day 3 - Montgomery AL to Jackson MS.gpx' },
+    { color:'#e89050', gpx:'/maps/Day 4 - Jackson MS to Austin TX.gpx' },
+    { color:'#d47044', gpx:'/maps/Day 5 - Austin TX to Terilingua TX.gpx' },
+    { color:'#c85848', gpx:'/maps/Day 6 - Big Bend National Park.gpx' },
+    { color:'#b85860', gpx:'/maps/Day 7 - Big Bend National Park.gpx' },
+    { color:'#c8a84a', gpx:'/maps/Day 8 - Terilingua TX to Tucson AZ.gpx' },
+    { color:'#8cd6a8', gpx:'/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx' },
+  ];
+
+  const heroMap = L.map('hero-map', {
+    dragging: false, zoomControl: false, scrollWheelZoom: false,
+    touchZoom: false, doubleClickZoom: false, boxZoom: false,
+    keyboard: false, tap: false,
+    attributionControl: true,
+  });
+
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg', {
+    attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 16,
+  }).addTo(heroMap);
+
+  // Set initial view while tracks load
+  heroMap.setView([36.5, -95], 4);
+
+  const boundsArr = [];
+  let loaded = 0;
+
+  HERO_DAYS.forEach(function(d) {
+    var layer = new L.GPX(d.gpx, {
+      async: true,
+      marker_options: { startIconUrl: null, endIconUrl: null, shadowUrl: null, wptIconUrls: { '': null } },
+      polyline_options: { color: d.color, weight: 2.5, opacity: 0.75, lineCap: 'round', lineJoin: 'round' },
+    });
+    layer.on('loaded', function(e) {
+      boundsArr.push(e.target.getBounds());
+      loaded++;
+      if (loaded === HERO_DAYS.length) {
+        var combined = L.latLngBounds(boundsArr[0].getSouthWest(), boundsArr[0].getNorthEast());
+        for (var i = 1; i < boundsArr.length; i++) combined.extend(boundsArr[i]);
+        heroMap.fitBounds(combined, { padding: [60, 60], animate: false });
+      }
+    });
+    layer.addTo(heroMap);
+  });
+})();
+</script>
 
 <script>
   // Intersection observer for scroll-reveal on day cards

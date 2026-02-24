@@ -1,0 +1,632 @@
+---
+import { days } from '../data/days';
+import MapNav from '../components/MapNav.astro';
+import MapBase from '../layouts/MapBase.astro';
+const daysWithGpx = days.filter(d => d.gpxUrl);
+---
+<MapBase title="Tile Styles — The Road" leaflet>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c1420;
+      --bg-deep: #07101a;
+      --surface: #111e30;
+      --accent: #c8a84a;
+      --text: #e8e0d0;
+      --text-muted: #8a7e6a;
+      --border: #1e2e40;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Raleway', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ─── HEADER ──────────────────────────────────────────────────────────────── */
+    .page-header {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+
+    .page-header .subtitle {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .back-link {
+      margin-left: auto;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* ─── EXPERIMENT SECTIONS ─────────────────────────────────────────────────── */
+    .experiments {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3.5rem;
+    }
+
+    .experiment {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .experiment-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .experiment-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+    }
+
+    .experiment-label {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .experiment-desc {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      max-width: 340px;
+      text-align: right;
+    }
+
+    .map-container {
+      height: 460px;
+      width: 100%;
+    }
+
+    .map-stats {
+      padding: 0.85rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .map-stats span { color: var(--accent); }
+
+    /* ─── LOADING STATE ───────────────────────────────────────────────────────── */
+    .map-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: var(--bg-deep);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      gap: 0.5rem;
+    }
+
+    /* ─── ERROR STATE ─────────────────────────────────────────────────────────── */
+    .map-error {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: var(--bg-deep);
+      color: #e07070;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ─── LEAFLET POPUP OVERRIDES ─────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      font-family: 'Raleway', system-ui, sans-serif !important;
+      font-size: 0.85rem !important;
+    }
+    .leaflet-popup-tip {
+      background: var(--surface) !important;
+    }
+    .leaflet-popup-content strong {
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ─── DAY SELECTOR ────────────────────────────────────────────────────────── */
+    .day-selector {
+      padding: 1.5rem 1.5rem 0;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .day-selector-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-right: 0.25rem;
+    }
+
+    .day-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg-deep);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.06em;
+    }
+    .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .day-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .day-btn:disabled { opacity: 0.35; cursor: default; }
+
+    @media (max-width: 600px) {
+      .map-container { height: 320px; }
+      .experiment-desc { display: none; }
+    }
+  </style>
+
+<!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
+<header class="page-header">
+  <h1>Tile Styles</h1>
+  <span class="subtitle">Map tile sampler</span>
+  <MapNav current="tilestyles" />
+</header>
+
+<!-- ─── EXPERIMENTS ──────────────────────────────────────────────────────────── -->
+<div class="experiments">
+
+  <!-- Experiment 1: Carto Dark Matter -->
+  <div class="experiment" id="exp-dark">
+    <div class="experiment-header">
+      <span class="experiment-name">01</span>
+      <span class="experiment-label">Carto Dark Matter</span>
+      <span class="experiment-desc">Dark base tiles. Track pops in cyan. Matches the site's night palette.</span>
+    </div>
+    <div id="map-dark" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-dark">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 2: Carto Voyager -->
+  <div class="experiment" id="exp-voyager">
+    <div class="experiment-header">
+      <span class="experiment-name">02</span>
+      <span class="experiment-label">Carto Voyager</span>
+      <span class="experiment-desc">Colorful, detailed streets. Good for reading city names and highway labels.</span>
+    </div>
+    <div id="map-voyager" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-voyager">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 3: Carto Positron -->
+  <div class="experiment" id="exp-light">
+    <div class="experiment-header">
+      <span class="experiment-name">03</span>
+      <span class="experiment-label">Carto Positron</span>
+      <span class="experiment-desc">Clean, minimal light base. Track and markers stand out clearly.</span>
+    </div>
+    <div id="map-light" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-light">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 4: OpenTopoMap -->
+  <div class="experiment" id="exp-topo">
+    <div class="experiment-header">
+      <span class="experiment-name">04</span>
+      <span class="experiment-label">OpenTopoMap</span>
+      <span class="experiment-desc">Terrain + elevation contours. Shows the mountains and elevation change en route.</span>
+    </div>
+    <div id="map-topo" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-topo">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 5: OSM Standard -->
+  <div class="experiment" id="exp-watercolor">
+    <div class="experiment-header">
+      <span class="experiment-name">05</span>
+      <span class="experiment-label">OSM Standard</span>
+      <span class="experiment-desc">The classic OpenStreetMap style. Every road, town, and trail — the world as volunteers mapped it.</span>
+    </div>
+    <div id="map-watercolor" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-watercolor">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 6: USGS Topo -->
+  <div class="experiment" id="exp-toner">
+    <div class="experiment-header">
+      <span class="experiment-name">06</span>
+      <span class="experiment-label">USGS Topo</span>
+      <span class="experiment-desc">US Geological Survey topographic map. Contour lines, terrain shading, elevation. The country laid bare.</span>
+    </div>
+    <div id="map-toner" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-toner">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 7: ESRI NatGeo -->
+  <div class="experiment" id="exp-natgeo">
+    <div class="experiment-header">
+      <span class="experiment-name">07</span>
+      <span class="experiment-label">ESRI NatGeo</span>
+      <span class="experiment-desc">National Geographic cartographic style. Classic atlas feel — closest to the site's hand-drawn maps.</span>
+    </div>
+    <div id="map-natgeo" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-natgeo">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 8: ESRI Satellite -->
+  <div class="experiment" id="exp-satellite">
+    <div class="experiment-header">
+      <span class="experiment-name">08</span>
+      <span class="experiment-label">ESRI World Imagery</span>
+      <span class="experiment-desc">Satellite. The actual ground you drove over — Appalachians, piedmont, coastal plain.</span>
+    </div>
+    <div id="map-satellite" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-satellite">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 9: Stamen Toner -->
+  <div class="experiment" id="exp-stamen-toner">
+    <div class="experiment-header">
+      <span class="experiment-name">09</span>
+      <span class="experiment-label">Stamen Toner</span>
+      <span class="experiment-desc">High-contrast black and white. Stark. Every road drawn in ink on blank paper.</span>
+    </div>
+    <div id="map-stamen-toner" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-stamen-toner">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 10: Stamen Toner Lite -->
+  <div class="experiment" id="exp-stamen-toner-lite">
+    <div class="experiment-header">
+      <span class="experiment-name">10</span>
+      <span class="experiment-label">Stamen Toner Lite</span>
+      <span class="experiment-desc">Softer version of Toner — gray on white. Roads without the weight.</span>
+    </div>
+    <div id="map-stamen-toner-lite" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-stamen-toner-lite">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 11: Stamen Terrain -->
+  <div class="experiment" id="exp-stamen-terrain">
+    <div class="experiment-header">
+      <span class="experiment-name">11</span>
+      <span class="experiment-label">Stamen Terrain</span>
+      <span class="experiment-desc">Terrain with hillshading and land cover. The Appalachians, the desert, the mountains — in relief.</span>
+    </div>
+    <div id="map-stamen-terrain" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-stamen-terrain">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+  <!-- Experiment 12: Stamen Watercolor -->
+  <div class="experiment" id="exp-stamen-watercolor">
+    <div class="experiment-header">
+      <span class="experiment-name">12</span>
+      <span class="experiment-label">Stamen Watercolor</span>
+      <span class="experiment-desc">Hand-painted watercolor aesthetic. The road trip as illustration — impressionistic, loose, alive.</span>
+    </div>
+    <div id="map-stamen-watercolor" class="map-container">
+      <div class="map-loading">Loading route…</div>
+    </div>
+    <div class="map-stats" id="stats-stamen-watercolor">
+      <div>Track loading…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── SCRIPTS ──────────────────────────────────────────────────────────────── -->
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
+
+<script is:inline>
+  const GPX_URL = '/maps/Day 1 - Philly to Charlotte.gpx';
+
+  const CONFIGS = [
+    {
+      id: 'dark',
+      tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      trackColor: '#7ebcd6',
+      startColor: '#4adf8a',
+      endColor: '#e05555',
+    },
+    {
+      id: 'voyager',
+      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      trackColor: '#d63b3b',
+      startColor: '#2266dd',
+      endColor: '#dd2222',
+    },
+    {
+      id: 'light',
+      tiles: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      trackColor: '#0055cc',
+      startColor: '#229922',
+      endColor: '#cc2222',
+    },
+    {
+      id: 'topo',
+      tiles: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      trackColor: '#cc3300',
+      startColor: '#0055cc',
+      endColor: '#cc0000',
+    },
+    {
+      id: 'watercolor',
+      tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      trackColor: '#e63946',
+      startColor: '#2a9d8f',
+      endColor: '#e76f51',
+      noSubdomains: true,
+    },
+    {
+      id: 'toner',
+      tiles: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'USGS The National Map: National Boundaries Dataset, 3DEP Elevation Program, Geographic Names Information System, National Hydrography Dataset, National Land Cover Database, National Structures Dataset, National Transportation Dataset',
+      trackColor: '#c8a84a',
+      startColor: '#22aa22',
+      endColor: '#cc2200',
+      noSubdomains: true,
+    },
+    {
+      id: 'natgeo',
+      tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+      trackColor: '#8b1a2e',
+      startColor: '#1a4a8b',
+      endColor: '#8b1a1a',
+      noSubdomains: true,
+    },
+    {
+      id: 'satellite',
+      tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+      trackColor: '#ffdd00',
+      startColor: '#00ddff',
+      endColor: '#ff4400',
+      noSubdomains: true,
+    },
+    {
+      id: 'stamen-toner',
+      tiles: 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png',
+      attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      trackColor: '#c8a84a',
+      startColor: '#22aa55',
+      endColor: '#dd2222',
+      noSubdomains: true,
+    },
+    {
+      id: 'stamen-toner-lite',
+      tiles: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png',
+      attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      trackColor: '#e8682a',
+      startColor: '#2266cc',
+      endColor: '#cc2200',
+      noSubdomains: true,
+    },
+    {
+      id: 'stamen-terrain',
+      tiles: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png',
+      attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      trackColor: '#cc2200',
+      startColor: '#1a4a8b',
+      endColor: '#8b1a1a',
+      noSubdomains: true,
+    },
+    {
+      id: 'stamen-watercolor',
+      tiles: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
+      attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>; <a href="https://stadiamaps.com">Stadia Maps</a>; &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      trackColor: '#1a1a6e',
+      startColor: '#22aa55',
+      endColor: '#aa1144',
+      noSubdomains: true,
+    },
+  ];
+
+  function makeDotIcon(color) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:12px; height:12px; border-radius:50%;
+        background:${color}; border:2px solid #fff;
+        box-shadow:0 1px 4px rgba(0,0,0,0.6);
+      "></div>`,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+    });
+  }
+
+  function metersToMiles(m) {
+    return (m * 0.000621371).toFixed(1);
+  }
+
+  function updateStats(id, gpxLayer) {
+    const el = document.getElementById(`stats-${id}`);
+    if (!el) return;
+    try {
+      const dist = metersToMiles(gpxLayer.get_distance());
+      const pts = gpxLayer.get_elevation_data ? gpxLayer.get_elevation_data().length : '—';
+      const start = gpxLayer.get_start_time ? gpxLayer.get_start_time() : null;
+      const end = gpxLayer.get_end_time ? gpxLayer.get_end_time() : null;
+      const duration = (start && end)
+        ? (() => {
+            const ms = new Date(end) - new Date(start);
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            return `${h}h ${m}m`;
+          })()
+        : '—';
+      el.innerHTML = `
+        <div>Distance: <span>${dist} mi</span></div>
+        <div>Track points: <span>${pts === '—' ? '—' : pts.toLocaleString()}</span></div>
+        <div>Duration: <span>${duration}</span></div>
+      `;
+    } catch {
+      el.innerHTML = '<div>Track loaded.</div>';
+    }
+  }
+
+  CONFIGS.forEach(cfg => {
+    const container = document.getElementById(`map-${cfg.id}`);
+    if (!container) return;
+
+    // Remove loading overlay
+    container.innerHTML = '';
+
+    const map = L.map(`map-${cfg.id}`, { scrollWheelZoom: false });
+
+    L.tileLayer(cfg.tiles, {
+      attribution: cfg.attribution,
+      maxZoom: 18,
+      ...(cfg.noSubdomains ? {} : { subdomains: 'abcd' }),
+    }).addTo(map);
+
+    const gpxLayer = new L.GPX(GPX_URL, {
+      async: true,
+      marker_options: {
+        startIconUrl: null,
+        endIconUrl: null,
+        shadowUrl: null,
+        wptIconUrls: { '': null },
+      },
+      polyline_options: {
+        color: cfg.trackColor,
+        weight: 3,
+        opacity: 0.9,
+        lineCap: 'round',
+        lineJoin: 'round',
+      },
+    });
+
+    gpxLayer.on('loaded', function(e) {
+      map.fitBounds(e.target.getBounds(), { padding: [32, 32] });
+      updateStats(cfg.id, e.target);
+
+      // Add custom start/end markers
+      const startLatLng = e.target.get_start_pt ? e.target.get_start_pt() : null;
+      const endLatLng = e.target.get_end_pt ? e.target.get_end_pt() : null;
+
+      if (startLatLng) {
+        L.marker(startLatLng, { icon: makeDotIcon(cfg.startColor) })
+          .bindPopup('<strong>Start</strong>Philadelphia, PA')
+          .addTo(map);
+      }
+      if (endLatLng) {
+        L.marker(endLatLng, { icon: makeDotIcon(cfg.endColor) })
+          .bindPopup('<strong>End</strong>Charlotte, NC')
+          .addTo(map);
+      }
+    });
+
+    gpxLayer.on('error', function() {
+      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#e07070;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">Failed to load GPX track</div>';
+    });
+
+    gpxLayer.addTo(map);
+  });
+</script>
+</MapBase>

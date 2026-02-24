@@ -16,7 +16,7 @@ const townsByDay = days.map(d => ({
 }));
 
 // Largest state bar width relative to TX (the max)
-const maxStateMiles = Math.max(...stateData.map(s => s.approxMiles));
+const maxStateMiles = Math.max(...stateData.map(s => s.miles));
 
 // Elevation min/max for the bar chart
 const minElev = Math.min(...elevationWaypoints.map(e => e.elevFt));
@@ -792,14 +792,11 @@ const elevRange = maxElev - minElev;
   </div>
 
   <p class="gpx-note">
-    <strong>Note on data.</strong> No GPS track was recorded during the trip.
-    State distances below are estimated from the known route corridors —
-    accurate to within ±5% on individual segments, summing to the
-    computed route total of {tripTotals.miles.toLocaleString()} miles.
+    <strong>Note on data.</strong> GPS tracks recorded on Garmin inReach for all 9 days.
+    State distances derived via point-in-polygon analysis of GPS coordinates — 3,571 GPS miles total.
     The odometer-verified total of {tripTotals.odometerMiles.toLocaleString()} miles
-    includes city driving, Big Bend park roads, the Airbnb dirt road, and other
-    miles not captured in point-to-point estimates. Elevation data is established
-    survey elevation for each waypoint, not GPS-recorded.
+    includes city driving, Big Bend park roads, the Airbnb dirt road, and other miles
+    beyond the main route corridor.
   </p>
 </section>
 
@@ -812,17 +809,17 @@ const elevRange = maxElev - minElev;
       <div class="section-rule"></div>
     </div>
     <h2 class="section-title">States of the Union</h2>
-    <p class="section-desc">13 states. Pennsylvania to California. ~3,406 route miles mapped across the continent.</p>
+    <p class="section-desc">{tripTotals.states.length} states. Pennsylvania to California. 3,571 GPS miles mapped across the continent.</p>
 
     <div class="states-grid">
       {stateData.map(s => {
-        const pct = (s.approxMiles / maxStateMiles) * 100;
+        const pct = (s.miles / maxStateMiles) * 100;
         return (
           <div class="state-card">
             <div class="state-header">
               <div>
                 <div class="state-name">{s.name}</div>
-                <div class="state-miles-val">~{s.approxMiles.toLocaleString()} mi</div>
+                <div class="state-miles-val">{s.miles.toLocaleString()} mi</div>
               </div>
               <div class="state-abbrev">{s.abbrev}</div>
             </div>
@@ -883,7 +880,7 @@ const elevRange = maxElev - minElev;
     </div>
     <h2 class="section-title">Elevation</h2>
     <p class="section-desc">
-      Sea level in Philadelphia. 5,600 ft at the Window Trail. Back to sea level in Santa Monica.
+      Sea level in Philadelphia. 5,784 ft in the Chisos Basin. Back to sea level in Santa Monica.
       The land rose through the middle of the country and fell back into the Pacific.
     </p>
 
@@ -993,7 +990,7 @@ const elevRange = maxElev - minElev;
       <div class="stat-block">
         <div class="stat-val">{tripTotals.states.length}</div>
         <div class="stat-label">States</div>
-        <div class="stat-note">PA · MD · VA · NC · SC · GA · AL · MS · LA · TX · NM · AZ · CA</div>
+        <div class="stat-note">{tripTotals.states.join(' · ')}</div>
       </div>
       <div class="stat-block">
         <div class="stat-val">{tripTotals.totalMeals}</div>
@@ -1008,7 +1005,7 @@ const elevRange = maxElev - minElev;
       <div class="stat-block">
         <div class="stat-val">{tripTotals.highPointFt.toLocaleString()}</div>
         <div class="stat-label">High Point, ft</div>
-        <div class="stat-note">{tripTotals.highPointLabel}. Day 7. Five-mile hike to the pour-off.</div>
+        <div class="stat-note">{tripTotals.highPointLabel}. Day 6. GPS-recorded peak.</div>
       </div>
       <div class="stat-block">
         <div class="stat-val">−227</div>
@@ -1021,19 +1018,19 @@ const elevRange = maxElev - minElev;
         <div class="stat-note">Ghost town that didn't finish dying. Three nights at the Starlight. Stars every night.</div>
       </div>
       <div class="stat-block">
-        <div class="stat-val">1,380</div>
+        <div class="stat-val">1,367</div>
         <div class="stat-label">Texas Miles</div>
-        <div class="stat-note">Largest share of the trip by state — 40% of the route total. Five driving days.</div>
+        <div class="stat-note">Largest share of the trip by state — 38% of the GPS total. Five driving days.</div>
       </div>
       <div class="stat-block">
-        <div class="stat-val">619</div>
+        <div class="stat-val">636</div>
         <div class="stat-label">Longest Day, mi</div>
-        <div class="stat-note">Day 8: Big Bend to Tucson. Big Bend → Hwy 170 → Marfa → El Paso → Las Cruces → Tucson.</div>
+        <div class="stat-note">Day 8: Big Bend to Tucson. Hwy 170 → Marfa → El Paso → Las Cruces → Tucson.</div>
       </div>
       <div class="stat-block">
-        <div class="stat-val">28</div>
+        <div class="stat-val">121</div>
         <div class="stat-label">Shortest Day, mi</div>
-        <div class="stat-note">Day 6: Terlingua to Big Bend. A short drive into an all-day exploration.</div>
+        <div class="stat-note">Day 6: Terlingua into Big Bend. A short drive into an all-day exploration.</div>
       </div>
       <div class="stat-block">
         <div class="stat-val">{tripTotals.totalPhotos}</div>

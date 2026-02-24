@@ -29,6 +29,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   description={`Day ${day.day}: ${day.tagline}`}
   theme={theme}
 >
+{day.gpxUrl && <link slot="head" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />}
 
 <style define:vars={{
   heroGrad: theme.heroGrad,
@@ -138,8 +139,8 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70%;
-    background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+    height: 75%;
+    background: linear-gradient(to top, var(--bg) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
     z-index: 2;
   }
 
@@ -532,6 +533,19 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
     font-weight: 500;
   }
 
+  /* ─── HERO MAP ──────────────────────────────────────────────────────────────── */
+  #day-hero-map {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* Hide leaflet controls in the hero map */
+  .day-hero :global(.leaflet-control-zoom),
+  .day-hero :global(.leaflet-control-attribution) {
+    display: none;
+  }
+
   /* ─── DAY NAV PREV/NEXT ──────────────────────────────────────────────────────── */
   .day-inline-nav {
     display: flex;
@@ -583,30 +597,13 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
 
 <!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
 <header class="day-hero">
+  <!-- Gradient always renders first — shows while map tiles load -->
   <div class="hero-bg-grad" aria-hidden="true"></div>
-  <div class="hero-texture" aria-hidden="true"></div>
 
-  <!-- Map book photo slot.
-       To add the drawn map photo: drop map.jpg / map.webp / map.png
-       into /public/images/days/{day}/ — detected automatically at build time. -->
-  <div class="hero-photo">
-    {heroPhoto ? (
-      <img
-        src={heroPhoto}
-        alt={`Drawn map for Day ${day.day}`}
-        onerror="this.parentElement.classList.add('no-photo')"
-      />
-    ) : null}
-    <div class="hero-photo-placeholder" aria-hidden="true">
-      <svg class="placeholder-icon" viewBox="0 0 80 80" fill="none">
-        <rect x="10" y="15" width="60" height="50" rx="2" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M10 35 L40 20 L70 35" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-        <path d="M25 55 Q40 40 55 55" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-        <circle cx="50" cy="30" r="5" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-      </svg>
-      <span class="placeholder-text">Map book — day {day.day}</span>
-    </div>
-  </div>
+  {day.gpxUrl
+    ? <div id="day-hero-map" data-gpx={day.gpxUrl} data-day={day.day} aria-hidden="true"></div>
+    : <div class="hero-texture" aria-hidden="true"></div>
+  }
 
   <div class="hero-scrim" aria-hidden="true"></div>
 
@@ -645,24 +642,6 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
     <span class="stat-val">{day.duration}</span>
     <span class="stat-lbl">driving</span>
   </div>
-  {day.stops.length > 0 && (
-    <>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-val">{day.stops.length}</span>
-        <span class="stat-lbl">stops</span>
-      </div>
-    </>
-  )}
-  {day.meals.length > 0 && (
-    <>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-val">{day.meals.length}</span>
-        <span class="stat-lbl">meals</span>
-      </div>
-    </>
-  )}
   <div class="stat-divider" aria-hidden="true"></div>
   <div class="stat-item">
     <span class="stat-val" style="font-size:0.75rem;">{day.from} → {day.to}</span>
@@ -682,7 +661,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   {day.gpxUrl && (
     <>
       <div class="stat-divider" aria-hidden="true"></div>
-      <a href="/mapbook" class="stat-item stat-map-link" aria-label="View route map">
+      <a href={`/mapbook?day=${day.day}`} class="stat-item stat-map-link" aria-label="View route map">
         <span class="stat-val">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="width:1rem;height:1rem;vertical-align:middle;"><path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.2" fill="currentColor" stroke="none"/></svg>
         </span>
@@ -713,42 +692,6 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
         <ul class="highlights-list stagger">
           {day.highlights.map(h => <li>{h}</li>)}
         </ul>
-      </section>
-    )}
-
-    <!-- Stops -->
-    {day.stops.length > 0 && (
-      <section>
-        <p class="section-label">Stops</p>
-        <ul class="stops-list stagger">
-          {day.stops.map(stop => (
-            <li class="stop-item">
-              <div class="stop-marker" aria-hidden="true"></div>
-              <div class="stop-info">
-                <h4>{stop.name}</h4>
-                {stop.note && <p>{stop.note}</p>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
-    <!-- Meals -->
-    {day.meals.length > 0 && (
-      <section>
-        <p class="section-label">Food</p>
-        <div class="meals-grid stagger">
-          {day.meals.map(meal => (
-            <div class="meal-card">
-              <span class="meal-type">{meal.type}</span>
-              <div class="meal-info">
-                <span class="meal-place">{meal.place}</span>
-                {meal.note && <span class="meal-note">{meal.note}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
     )}
 
@@ -829,5 +772,48 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
 
 <!-- ─── FILMSTRIP NAV ───────────────────────────────────────────────────────── -->
 <DayNav currentDay={day.day} />
+
+{day.gpxUrl && (
+  <>
+    <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script is:inline src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
+    <script is:inline>
+    (function() {
+      // Bold, dark colors chosen to pop on the light watercolor tile background
+      var DAY_COLORS = {
+        1:'#1a3a6e', 2:'#6e1a2a', 3:'#1e5e2e', 4:'#6e3a1a', 5:'#4a1a6e',
+        6:'#8e1a1a', 7:'#1a5e5e', 8:'#5e4a0a', 9:'#1a4a2e',
+      };
+      var el = document.getElementById('day-hero-map');
+      if (!el) return;
+      var gpxUrl = el.dataset.gpx;
+      var dayNum = parseInt(el.dataset.day);
+      var color = DAY_COLORS[dayNum] || '#c8a84a';
+
+      var heroMap = L.map(el, {
+        dragging: false, zoomControl: false, scrollWheelZoom: false,
+        touchZoom: false, doubleClickZoom: false, boxZoom: false,
+        keyboard: false, tap: false, attributionControl: false,
+      });
+
+      L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg', {
+        maxZoom: 16,
+      }).addTo(heroMap);
+
+      heroMap.setView([36.5, -95], 4);
+
+      var layer = new L.GPX(gpxUrl, {
+        async: true,
+        marker_options: { startIconUrl: null, endIconUrl: null, shadowUrl: null, wptIconUrls: { '': null } },
+        polyline_options: { color: color, weight: 4, opacity: 1, lineCap: 'round', lineJoin: 'round' },
+      });
+      layer.on('loaded', function(e) {
+        heroMap.fitBounds(e.target.getBounds(), { padding: [80, 80], animate: false });
+      });
+      layer.addTo(heroMap);
+    })();
+    </script>
+  </>
+)}
 
 </Base>

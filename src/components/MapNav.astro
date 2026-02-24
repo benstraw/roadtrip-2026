@@ -1,6 +1,6 @@
 ---
 interface Props {
-  current: 'ridge' | 'elevation' | 'trip' | 'experiments' | 'tech' | 'mapbook';
+  current: 'ridge' | 'elevation' | 'trip' | 'experiments' | 'tech' | 'tilestyles' | 'mapbook';
 }
 const { current } = Astro.props;
 
@@ -9,7 +9,8 @@ const links = [
   { id: 'elevation',   label: 'Elevation',  href: '/mapelevation' },
   { id: 'trip',        label: 'Full Trip',  href: '/maptrip' },
   { id: 'experiments', label: 'Experiments',href: '/mapwild' },
-  { id: 'mapbook',     label: 'Tile Styles', href: '/mapbook' },
+  { id: 'mapbook',     label: 'Map Book',   href: '/mapbook' },
+  { id: 'tilestyles',  label: 'Tile Styles',href: '/tilestyles' },
   { id: 'tech',        label: 'Tech',       href: '/maptech' },
 ];
 ---

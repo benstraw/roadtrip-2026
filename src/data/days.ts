@@ -762,9 +762,9 @@ export const tripTotals = {
   totalStops: days.reduce((acc, d) => acc + d.stops.length, 0),
   totalPhotos: days.reduce((acc, d) => acc + d.galleryImages.filter(g => !g.video).length, 0),
   totalVideos: days.reduce((acc, d) => acc + d.galleryImages.filter(g => g.video).length, 0),
-  // Highest elevation reached: Window Trail, Chisos Mountains, Big Bend NP
-  highPointFt: 5600,
-  highPointLabel: 'Window Trail, Chisos Mts.',
+  // Highest elevation reached: Chisos Basin, Big Bend NP (GPS-recorded, Day 6)
+  highPointFt: 5784,
+  highPointLabel: 'Chisos Basin, Big Bend NP',
 };
 
 // ─── PHOTO GUIDE ─────────────────────────────────────────────────────────────

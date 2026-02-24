@@ -1,17 +1,17 @@
 // ─── ALMANAC DATA ─────────────────────────────────────────────────────────────
 //
-// Source: trip logs, route data, and known highway distances.
-// State mileage figures are approximate — no GPS/GPX track was recorded.
-// Odometer total (3,753 mi) is confirmed from Day 9 truck photo.
-// Per-state estimates are derived from the known route corridors and sum
-// to the computed route total of 3,406 mi (±5% on any individual segment).
+// Source: GPX tracks recorded on Garmin inReach, all 9 days.
+// State mileage derived via point-in-polygon from GPS coordinates (haversine).
+// GPS total: 3,571 mi. Odometer total: 3,753 mi (confirmed Day 9 truck photo).
+// Difference accounts for city driving, park roads, Airbnb dirt road, warm-up
+// idle miles, and GPS signal gaps.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface StateEntry {
   name: string;
   abbrev: string;
-  approxMiles: number;
+  miles: number;
   days: number[];
   primaryRoads: string[];
   towns: string[];
@@ -56,16 +56,25 @@ export const stateData: StateEntry[] = [
   {
     name: 'Pennsylvania',
     abbrev: 'PA',
-    approxMiles: 28,
+    miles: 29,
     days: [1],
     primaryRoads: ['I-95 S'],
     towns: ['Philadelphia'],
     note: 'Start of the trip. Dug the Tacoma out before seven. City still sleeping.',
   },
   {
+    name: 'Delaware',
+    abbrev: 'DE',
+    miles: 12,
+    days: [1],
+    primaryRoads: ['I-95 S'],
+    towns: ['Wilmington'],
+    note: 'Brief crossing on I-95. Wilmington through the windshield. Gone before it registered.',
+  },
+  {
     name: 'Maryland',
     abbrev: 'MD',
-    approxMiles: 95,
+    miles: 94,
     days: [1],
     primaryRoads: ['I-95 S'],
     towns: ['Baltimore', 'Annapolis Junction'],
@@ -74,7 +83,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Virginia',
     abbrev: 'VA',
-    approxMiles: 135,
+    miles: 192,
     days: [1],
     primaryRoads: ['I-95 S', 'I-85 S'],
     towns: ['Arlington', 'Alexandria', 'Fredericksburg', 'Richmond', 'Petersburg'],
@@ -83,7 +92,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'North Carolina',
     abbrev: 'NC',
-    approxMiles: 200,
+    miles: 234,
     days: [1, 2],
     primaryRoads: ['I-85 S'],
     towns: ['Charlotte'],
@@ -92,7 +101,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'South Carolina',
     abbrev: 'SC',
-    approxMiles: 92,
+    miles: 95,
     days: [2],
     primaryRoads: ['I-85 S'],
     towns: ['Gaffney', 'Spartanburg', 'Greenville', 'Anderson'],
@@ -101,7 +110,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Georgia',
     abbrev: 'GA',
-    approxMiles: 167,
+    miles: 179,
     days: [2],
     primaryRoads: ['I-85 S'],
     towns: ['Lavonia', 'Gainesville', 'Atlanta', 'LaGrange'],
@@ -110,7 +119,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Alabama',
     abbrev: 'AL',
-    approxMiles: 195,
+    miles: 216,
     days: [2, 3],
     primaryRoads: ['I-85 S', 'US-80 W'],
     towns: ['Auburn', 'Montgomery', 'Selma'],
@@ -119,7 +128,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Mississippi',
     abbrev: 'MS',
-    approxMiles: 198,
+    miles: 161,
     days: [3, 4],
     primaryRoads: ['US-80 W', 'I-20 W'],
     towns: ['Meridian', 'Jackson'],
@@ -128,7 +137,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Louisiana',
     abbrev: 'LA',
-    approxMiles: 180,
+    miles: 182,
     days: [4],
     primaryRoads: ['I-20 W'],
     towns: ['Monroe', 'Shreveport'],
@@ -137,7 +146,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'Texas',
     abbrev: 'TX',
-    approxMiles: 1380,
+    miles: 1367,
     days: [4, 5, 6, 7, 8],
     primaryRoads: ['I-20 W', 'I-35 S', 'US-190 W', 'US-67 S', 'TX-118 S', 'TX-170 W', 'US-90 W', 'I-10 W'],
     towns: [
@@ -151,16 +160,16 @@ export const stateData: StateEntry[] = [
   {
     name: 'New Mexico',
     abbrev: 'NM',
-    approxMiles: 45,
+    miles: 164,
     days: [8],
     primaryRoads: ['I-10 W'],
-    towns: ['Las Cruces'],
-    note: 'Brief crossing on I-10. Las Cruces visible to the north. El Paso → NM line → AZ border in under an hour.',
+    towns: ['Las Cruces', 'Deming'],
+    note: 'I-10 west from El Paso through Las Cruces and Deming to the Arizona line. High desert, 160 miles of it.',
   },
   {
     name: 'Arizona',
     abbrev: 'AZ',
-    approxMiles: 415,
+    miles: 379,
     days: [8, 9],
     primaryRoads: ['I-10 W'],
     towns: ['Tucson', 'Casa Grande', 'Yuma'],
@@ -169,7 +178,7 @@ export const stateData: StateEntry[] = [
   {
     name: 'California',
     abbrev: 'CA',
-    approxMiles: 276,
+    miles: 246,
     days: [9],
     primaryRoads: ['I-10 W', 'I-15 N', 'I-10 W'],
     towns: ['Blythe', 'Indio', 'Palm Springs', 'Chino Hills', 'Los Angeles', 'Santa Monica'],
@@ -183,9 +192,9 @@ export const highways: HighwayEntry[] = [
   {
     route: 'I-95 S',
     name: 'Interstate 95',
-    states: ['PA', 'MD', 'VA'],
+    states: ['PA', 'DE', 'MD', 'VA'],
     days: [1],
-    note: 'Philadelphia south through Baltimore and Washington. Monuments grey in winter fog.',
+    note: 'Philadelphia south through Wilmington, Baltimore, and Washington. Monuments grey in winter fog.',
   },
   {
     route: 'I-85 S',
@@ -260,7 +269,7 @@ export const highways: HighwayEntry[] = [
 ];
 
 // ─── ELEVATION WAYPOINTS ─────────────────────────────────────────────────────
-// No GPS track recorded. Elevations are established figures for each location.
+// Established survey elevations for named waypoints along the route.
 
 export const elevationWaypoints: ElevationWaypoint[] = [
   { label: 'Philadelphia, PA', state: 'PA', elevFt: 39, day: 1 },
@@ -278,8 +287,8 @@ export const elevationWaypoints: ElevationWaypoint[] = [
   { label: 'Fort Stockton, TX', state: 'TX', elevFt: 2952, day: 5, note: 'Last real stop before the big empty' },
   { label: 'Alpine, TX', state: 'TX', elevFt: 4475, day: 5, note: 'Walmart stop' },
   { label: 'Terlingua / Study Butte, TX', state: 'TX', elevFt: 2461, day: 5, note: 'Nights 5–7 (ghost town)' },
-  { label: 'Chisos Basin, Big Bend NP', state: 'TX', elevFt: 5401, day: 6 },
-  { label: 'Window Trail — high point', state: 'TX', elevFt: 5600, day: 7, note: 'TRIP HIGH POINT' },
+  { label: 'Chisos Basin, Big Bend NP', state: 'TX', elevFt: 5784, day: 6, note: 'TRIP HIGH POINT' },
+  { label: 'Window Trail — pour-off', state: 'TX', elevFt: 5772, day: 7 },
   { label: 'Santa Elena Canyon', state: 'TX', elevFt: 1880, day: 7, note: '1,500 ft walls above the river' },
   { label: 'Marfa, TX', state: 'TX', elevFt: 4688, day: 8, note: 'Coffee. Post office.' },
   { label: 'El Paso, TX', state: 'TX', elevFt: 3740, day: 8 },
@@ -333,7 +342,7 @@ export const geography: GeographyEntry[] = [
     type: 'mountain',
     states: ['TX'],
     days: [6, 7],
-    note: 'Sky island in the middle of Big Bend. Window Trail to 5,600 ft looking out over the desert basin. The trip\'s high point.',
+    note: 'Sky island in the middle of Big Bend. Chisos Basin at 5,784 ft — the trip\'s high point. Window Trail looking out over the desert basin.',
   },
   {
     name: 'Davis Mountains',
@@ -398,6 +407,7 @@ export const geography: GeographyEntry[] = [
 export const townsCatalog: TownEntry[] = [
   // Day 1
   { name: 'Philadelphia', state: 'PA', day: 1, role: 'stop', note: 'Start. Dug out before 7am.' },
+  { name: 'Wilmington', state: 'DE', day: 1, role: 'drive-through', note: 'I-95 south. Gone in twelve miles.' },
   { name: 'Washington DC', state: 'VA/MD', day: 1, role: 'drive-through', note: 'Monuments grey in winter fog' },
   { name: 'Charlotte', state: 'NC', day: 1, role: 'overnight', note: 'Night 1. City BBQ.' },
   // Day 2
