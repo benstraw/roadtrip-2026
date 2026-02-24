@@ -1,0 +1,433 @@
+---
+import MapNav from '../components/MapNav.astro';
+import MapBase from '../layouts/MapBase.astro';
+---
+<MapBase title="Elevation — The Road" leaflet>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
+      --accent: #c8a84a; --text: #e8e0d0; --text-muted: #8a7e6a; --border: #1e2e40;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; display: flex; flex-direction: column; }
+
+    /* ─── HEADER ─── */
+    .page-header {
+      padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); }
+    .page-header .subtitle { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+
+
+    /* ─── LOADING STRIP ─── */
+    .loading-strip { height: 2px; background: var(--border); flex-shrink: 0; }
+    .loading-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+
+    /* ─── MAIN LAYOUT ─── */
+    .elev-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+    /* ─── MAP SIDE ─── */
+    .map-side { width: 57%; flex-shrink: 0; position: relative; }
+    #map-elev { width: 100%; height: 100%; }
+
+    /* ─── MAP LEGEND ─── */
+    .map-hint {
+      position: absolute; bottom: 1rem; left: 1rem; z-index: 1000;
+      background: rgba(7,16,26,0.88); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0.5rem 0.75rem;
+      font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+    }
+
+    /* ─── PROFILE SIDE ─── */
+    .profile-side {
+      flex: 1; overflow-y: auto; background: var(--bg-deep);
+      border-left: 1px solid var(--border);
+    }
+
+    /* ─── PROFILE CARD ─── */
+    .profile-card {
+      padding: 0.9rem 1.1rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      position: relative;
+    }
+    .profile-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: transparent; transition: background 0.15s;
+    }
+    .profile-card.highlight { background: rgba(255,255,255,0.025); }
+    .profile-card.highlight::before { background: var(--card-color); }
+
+    .card-header { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.45rem; }
+    .card-day { font-family: 'Space Mono', monospace; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
+    .card-route { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .card-date { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: var(--text-muted); flex-shrink: 0; }
+
+    .card-svg { width: 100%; display: block; overflow: visible; }
+    .card-status {
+      font-family: 'Space Mono', monospace; font-size: 0.58rem;
+      color: var(--text-muted); min-height: 1.2em; margin-top: 0.2rem;
+      letter-spacing: 0.05em;
+    }
+    .card-stats {
+      display: flex; gap: 1.1rem; margin-top: 0.3rem; padding-bottom: 0.1rem;
+      font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+    }
+    .card-stats b { font-family: 'Space Mono', monospace; color: var(--text); font-weight: 400; }
+
+    /* ─── D3 AXIS ─── */
+    .ea line { stroke: rgba(255,255,255,0.07); }
+    .ea .domain { display: none; }
+    .ea text { fill: #6a6055; font-family: 'Space Mono', monospace; font-size: 7.5px; letter-spacing: 0.04em; }
+
+    /* ─── LEAFLET ─── */
+    .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 4px !important; font-family: 'Raleway', sans-serif !important; }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-control-zoom a { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 680px) {
+      html, body { overflow: auto; height: auto; }
+      .elev-layout { flex-direction: column; overflow: visible; height: auto; }
+      .map-side { width: 100%; height: 50vh; }
+      .profile-side { overflow: visible; }
+    }
+  </style>
+
+<header class="page-header">
+  <h1>Elevation</h1>
+  <span class="subtitle">Nine days · 3,753 miles · 5,938 ft vertical</span>
+  <MapNav current="elevation" />
+</header>
+
+<div class="loading-strip"><div class="loading-fill" id="loading-fill"></div></div>
+
+<div class="elev-layout">
+
+  <!-- MAP -->
+  <div class="map-side">
+    <div id="map-elev"></div>
+    <div class="map-hint">Hover a profile · click a track</div>
+  </div>
+
+  <!-- PROFILES -->
+  <aside class="profile-side" id="profile-side">
+    <div id="profile-cards"></div>
+  </aside>
+
+</div>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script is:inline>
+
+const DAYS = [
+  { day: 1, from: 'Philadelphia', to: 'Charlotte',  miles: 536, gpx: '/maps/Day 1 - Philly to Charlotte.gpx',            color: '#7ebcd6', date: 'Jan 30' },
+  { day: 2, from: 'Charlotte',    to: 'Montgomery',  miles: 406, gpx: '/maps/Day 2 - Charlotte NC to Montgomery AL.gpx',   color: '#a0c8e0', date: 'Jan 31' },
+  { day: 3, from: 'Montgomery',   to: 'Jackson',     miles: 186, gpx: '/maps/Day 3 - Montgomery AL to Jackson MS.gpx',     color: '#c4782a', date: 'Feb 1'  },
+  { day: 4, from: 'Jackson',      to: 'Austin',      miles: 480, gpx: '/maps/Day 4 - Jackson MS to Austin TX.gpx',         color: '#d4761e', date: 'Feb 2'  },
+  { day: 5, from: 'Austin',       to: 'Terlingua',   miles: 330, gpx: '/maps/Day 5 - Austin TX to Terilingua TX.gpx',      color: '#e8681a', date: 'Feb 3'  },
+  { day: 6, from: 'Terlingua',    to: 'Big Bend',    miles: 62,  gpx: '/maps/Day 6 - Big Bend National Park.gpx',          color: '#d4481a', date: 'Feb 4'  },
+  { day: 7, from: 'Big Bend',     to: 'Big Bend',    miles: 55,  gpx: '/maps/Day 7 - Big Bend National Park.gpx',          color: '#c83a0a', date: 'Feb 5'  },
+  { day: 8, from: 'Terlingua',    to: 'Tucson',      miles: 474, gpx: '/maps/Day 8 - Terilingua TX to Tucson AZ.gpx',      color: '#d4600a', date: 'Feb 6'  },
+  { day: 9, from: 'Tucson',       to: 'California',  miles: 224, gpx: '/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx',     color: '#f5c400', date: 'Feb 7'  },
+];
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function metersToFeet(m) { return m * 3.28084; }
+
+async function parseGPX(url) {
+  const text = await fetch(url).then(r => r.text());
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  return Array.from(doc.querySelectorAll('trkpt')).map(pt => ({
+    lat: parseFloat(pt.getAttribute('lat')),
+    lon: parseFloat(pt.getAttribute('lon')),
+    ele: parseFloat(pt.querySelector('ele')?.textContent || '0'),
+  }));
+}
+
+// Rolling average smoother — reduces GPS elevation noise
+function smooth(pts, w = 5) {
+  return pts.map((p, i) => {
+    const s = Math.max(0, i - w), e = Math.min(pts.length - 1, i + w);
+    const avg = pts.slice(s, e + 1).reduce((sum, x) => sum + x.ele, 0) / (e - s + 1);
+    return { ...p, ele: avg };
+  });
+}
+
+// LTTB: Largest Triangle Three Buckets downsampling
+// Reduces N points to `threshold` while preserving visual shape
+function lttb(data, threshold) {
+  const n = data.length;
+  if (threshold >= n || threshold < 3) return data.slice();
+  const out = [data[0]];
+  let a = 0;
+  for (let i = 0; i < threshold - 2; i++) {
+    const r0 = Math.floor((i + 0) * (n - 2) / (threshold - 2)) + 1;
+    const r1 = Math.floor((i + 1) * (n - 2) / (threshold - 2)) + 1;
+    const r2 = Math.min(Math.floor((i + 2) * (n - 2) / (threshold - 2)) + 1, n - 1);
+    let avgX = 0, avgY = 0, cnt = 0;
+    for (let j = r1; j < r2; j++, cnt++) { avgX += data[j].dist; avgY += data[j].ele; }
+    avgX /= cnt || 1; avgY /= cnt || 1;
+    let maxArea = -1, pick = r0;
+    const ax = data[a].dist, ay = data[a].ele;
+    for (let j = r0; j < r1; j++) {
+      const area = Math.abs((ax - avgX) * (data[j].ele - ay) - (ax - data[j].dist) * (avgY - ay));
+      if (area > maxArea) { maxArea = area; pick = j; }
+    }
+    out.push(data[pick]);
+    a = pick;
+  }
+  out.push(data[n - 1]);
+  return out;
+}
+
+// Build cumulative-distance elevation series
+function buildSeries(rawPts) {
+  const smoothed = smooth(rawPts, 5);
+  let cum = 0;
+  return smoothed.map((p, i) => {
+    if (i > 0) cum += haversine(smoothed[i-1].lat, smoothed[i-1].lon, p.lat, p.lon);
+    return { dist: cum, ele: metersToFeet(p.ele), lat: p.lat, lon: p.lon };
+  });
+}
+
+// ─── MAP INIT ────────────────────────────────────────────────────────────────
+
+const map = L.map('map-elev', { scrollWheelZoom: true, center: [35, -90], zoom: 5 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18, subdomains: 'abcd',
+}).addTo(map);
+
+const mapLines = {};   // day → L.polyline
+const mapDots  = {};   // day → L.circleMarker (hover crosshair)
+const allBounds = [];
+let activeDay = null;
+let loadedCount = 0;
+
+const loadingFill = document.getElementById('loading-fill');
+
+// ─── PRE-BUILD CARDS IN DOM ORDER ────────────────────────────────────────────
+
+const cardsEl = document.getElementById('profile-cards');
+DAYS.forEach(d => {
+  const card = document.createElement('div');
+  card.className = 'profile-card';
+  card.id = `card-${d.day}`;
+  card.style.setProperty('--card-color', d.color);
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="card-day" style="color:${d.color}">Day ${d.day}</span>
+      <span class="card-route">${d.from} → ${d.to}</span>
+      <span class="card-date">${d.date} · ${d.miles} mi</span>
+    </div>
+    <svg class="card-svg" id="svg-${d.day}" height="110"></svg>
+    <div class="card-status" id="status-${d.day}"></div>
+    <div class="card-stats" id="stats-${d.day}" style="color:var(--text-muted);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;margin-top:0.3rem;padding-bottom:0.2rem;">—</div>
+  `;
+  cardsEl.appendChild(card);
+});
+
+// ─── LOAD ALL DAYS IN PARALLEL ────────────────────────────────────────────────
+
+DAYS.forEach(d => {
+  parseGPX(d.gpx).then(rawPts => {
+    loadedCount++;
+    loadingFill.style.width = `${(loadedCount / DAYS.length * 100).toFixed(0)}%`;
+    if (loadedCount === DAYS.length) loadingFill.style.background = '#2a6a3a';
+
+    const series     = buildSeries(rawPts);
+    const downsampled = lttb(series, 480);
+
+    // Map polyline — thin render set, every 8th point
+    const mapPts = series.filter((_, i) => i % 8 === 0).map(p => [p.lat, p.lon]);
+    const pl = L.polyline(mapPts, { color: d.color, weight: 3, opacity: 0.78, lineCap: 'round' }).addTo(map);
+    mapLines[d.day] = pl;
+
+    // Hover dot on map (hidden until profile hover)
+    const mk = L.circleMarker(mapPts[0], {
+      radius: 7, color: '#fff', fillColor: d.color, fillOpacity: 1, weight: 2,
+      opacity: 0, fillOpacity: 0,
+    }).addTo(map);
+    mapDots[d.day] = mk;
+
+    allBounds.push(L.latLngBounds(mapPts));
+    if (loadedCount === DAYS.length) {
+      const combined = allBounds.reduce((acc, b) => acc.extend(b));
+      map.fitBounds(combined, { padding: [28, 28] });
+    }
+
+    // Click track → scroll to card
+    pl.on('click', () => {
+      document.getElementById(`card-${d.day}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActive(d.day);
+    });
+    pl.on('mouseover', () => setActive(d.day));
+    pl.on('mouseout',  () => clearActive());
+
+    // Stats
+    const eles = series.map(p => p.ele);
+    const minE = Math.min(...eles), maxE = Math.max(...eles);
+    const dist = series[series.length - 1]?.dist || 0;
+    document.getElementById(`stats-${d.day}`).innerHTML =
+      `Min <b>${Math.round(minE).toLocaleString()} ft</b> &nbsp;·&nbsp; ` +
+      `Max <b>${Math.round(maxE).toLocaleString()} ft</b> &nbsp;·&nbsp; ` +
+      `Gain <b>+${Math.round(maxE - minE).toLocaleString()} ft</b> &nbsp;·&nbsp; ` +
+      `Dist <b>${dist.toFixed(0)} mi</b>`;
+
+    renderProfile(d, downsampled, series);
+  });
+});
+
+// ─── ACTIVE STATE ────────────────────────────────────────────────────────────
+
+function setActive(dayNum) {
+  if (activeDay === dayNum) return;
+  activeDay = dayNum;
+  DAYS.forEach(({ day }) => {
+    const pl = mapLines[day];
+    if (!pl) return;
+    pl.setStyle(day === dayNum ? { weight: 5.5, opacity: 1 } : { weight: 1.8, opacity: 0.25 });
+    if (day === dayNum) pl.bringToFront();
+  });
+  document.querySelectorAll('.profile-card').forEach(c => c.classList.toggle('highlight', c.id === `card-${dayNum}`));
+}
+
+function clearActive() {
+  activeDay = null;
+  DAYS.forEach(({ day }) => mapLines[day]?.setStyle({ weight: 3, opacity: 0.78 }));
+  document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('highlight'));
+}
+
+// ─── D3 PROFILE RENDERER ─────────────────────────────────────────────────────
+
+function renderProfile(d, downsampled, fullSeries) {
+  const svgEl = document.getElementById(`svg-${d.day}`);
+  if (!svgEl) return;
+
+  const SVG_H = 110;
+  const mar = { top: 8, right: 10, bottom: 22, left: 44 };
+  const W = svgEl.parentElement.clientWidth || 320;
+  const w = W - mar.left - mar.right;
+  const h = SVG_H - mar.top - mar.bottom;
+
+  svgEl.setAttribute('width', W);
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${SVG_H}`);
+  while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+  const svg = d3.select(svgEl);
+  const g   = svg.append('g').attr('transform', `translate(${mar.left},${mar.top})`);
+
+  const maxDist = d3.max(downsampled, p => p.dist);
+  const minEle  = d3.min(downsampled, p => p.ele);
+  const maxEle  = d3.max(downsampled, p => p.ele);
+  const span    = maxEle - minEle || 1;
+  const yPad    = span * 0.14;
+  const yMin    = Math.min(0, minEle) - yPad;
+  const yMax    = maxEle + yPad;
+
+  const xSc = d3.scaleLinear().domain([0, maxDist]).range([0, w]);
+  const ySc = d3.scaleLinear().domain([yMin, yMax]).range([h, 0]);
+
+  // Gradient fill
+  const gid = `gf${d.day}`;
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient').attr('id', gid).attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
+  grad.append('stop').attr('offset', '0%').attr('stop-color', d.color).attr('stop-opacity', 0.5);
+  grad.append('stop').attr('offset', '100%').attr('stop-color', d.color).attr('stop-opacity', 0.03);
+
+  // Area fill
+  g.append('path')
+    .datum(downsampled)
+    .attr('d', d3.area().x(p => xSc(p.dist)).y0(h).y1(p => ySc(p.ele)).curve(d3.curveMonotoneX))
+    .attr('fill', `url(#${gid})`);
+
+  // Elevation line
+  g.append('path')
+    .datum(downsampled)
+    .attr('d', d3.line().x(p => xSc(p.dist)).y(p => ySc(p.ele)).curve(d3.curveMonotoneX))
+    .attr('fill', 'none').attr('stroke', d.color).attr('stroke-width', 1.6);
+
+  // Sea-level reference line
+  if (minEle < 100) {
+    const sy = ySc(0);
+    if (sy < h && sy > 0) {
+      g.append('line').attr('x1', 0).attr('x2', w).attr('y1', sy).attr('y2', sy)
+        .attr('stroke', '#3a7ca0').attr('stroke-width', 0.8).attr('stroke-dasharray', '3,3').attr('opacity', 0.7);
+      g.append('text').attr('x', 2).attr('y', sy - 3)
+        .attr('fill', '#3a7ca0').attr('font-size', '7px').attr('font-family', 'Space Mono, monospace')
+        .attr('letter-spacing', '0.08em').text('SEA LVL');
+    }
+  }
+
+  // Axes
+  g.append('g').attr('class', 'ea').attr('transform', `translate(0,${h})`).call(
+    d3.axisBottom(xSc).tickSize(-h).ticks(4).tickFormat(v => `${Math.round(v)}mi`)
+  );
+  g.append('g').attr('class', 'ea').call(
+    d3.axisLeft(ySc).tickSize(-w).ticks(3).tickFormat(v =>
+      Math.abs(v) >= 1000 ? `${(v/1000).toFixed(1)}k` : `${Math.round(v)}`
+    )
+  );
+
+  // ── Hover ──
+  const vLine = g.append('line').attr('y1', 0).attr('y2', h)
+    .attr('stroke', 'rgba(255,255,255,0.3)').attr('stroke-width', 1)
+    .attr('stroke-dasharray', '3,3').attr('pointer-events', 'none').attr('opacity', 0);
+  const dot = g.append('circle').attr('r', 4.5)
+    .attr('fill', d.color).attr('stroke', '#fff').attr('stroke-width', 1.5)
+    .attr('pointer-events', 'none').attr('opacity', 0);
+
+  const distArr  = downsampled.map(p => p.dist);
+  const statusEl = document.getElementById(`status-${d.day}`);
+  const card     = document.getElementById(`card-${d.day}`);
+
+  g.append('rect').attr('width', w).attr('height', h).attr('fill', 'none').attr('pointer-events', 'all')
+    .on('mouseenter', () => setActive(d.day))
+    .on('mouseleave', () => {
+      clearActive();
+      vLine.attr('opacity', 0);
+      dot.attr('opacity', 0);
+      mapDots[d.day]?.setStyle({ opacity: 0, fillOpacity: 0 });
+      if (statusEl) statusEl.textContent = '';
+    })
+    .on('mousemove', function(event) {
+      setActive(d.day);
+      const [mx] = d3.pointer(event);
+      const idx = Math.max(0, Math.min(d3.bisectLeft(distArr, xSc.invert(mx)), downsampled.length - 1));
+      const pt  = downsampled[idx];
+
+      vLine.attr('x1', xSc(pt.dist)).attr('x2', xSc(pt.dist)).attr('opacity', 0.7);
+      dot.attr('cx', xSc(pt.dist)).attr('cy', ySc(pt.ele)).attr('opacity', 1);
+
+      const mk = mapDots[d.day];
+      if (mk) mk.setLatLng([pt.lat, pt.lon]).setStyle({ opacity: 1, fillOpacity: 1 });
+
+      if (statusEl) {
+        const below = pt.ele < 0 ? ' (below sea level)' : '';
+        statusEl.textContent = `${pt.dist.toFixed(1)} mi  ·  ${Math.round(pt.ele).toLocaleString()} ft${below}`;
+      }
+    });
+
+  // Card-level hover activates map
+  card.addEventListener('mouseenter', () => setActive(d.day));
+  card.addEventListener('mouseleave', () => {
+    clearActive();
+    mapDots[d.day]?.setStyle({ opacity: 0, fillOpacity: 0 });
+    if (statusEl) statusEl.textContent = '';
+  });
+}
+
+</script>
+</MapBase>

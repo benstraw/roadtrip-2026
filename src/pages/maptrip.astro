@@ -1,0 +1,236 @@
+---
+import { days } from '../data/days';
+import MapNav from '../components/MapNav.astro';
+import MapBase from '../layouts/MapBase.astro';
+const daysWithGpx = days.filter(d => d.gpxUrl);
+---
+<MapBase title="Full Trip Map — The Road" leaflet>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0c1420; --bg-deep: #07101a; --surface: #111e30;
+      --accent: #c8a84a; --text: #e8e0d0; --text-muted: #8a7e6a; --border: #1e2e40;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ─── HEADER ── */
+    .page-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); }
+    .page-header .subtitle { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+
+
+    /* ─── LAYOUT ── */
+    .trip-layout { display: flex; flex: 1; min-height: 0; }
+
+    /* ─── SIDEBAR ── */
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--bg-deep);
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+    .sidebar-title { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); padding: 0 1rem 0.75rem; }
+    .day-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.6rem 1rem; cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .day-item:hover { background: rgba(255,255,255,0.04); }
+    .day-item.active { background: rgba(255,255,255,0.06); }
+    .day-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .day-info { min-width: 0; }
+    .day-num { font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); }
+    .day-route { font-size: 0.7rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .day-miles { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--text-muted); }
+
+    /* ─── MAP ── */
+    .map-wrap { flex: 1; position: relative; }
+    #map-trip { width: 100%; height: 100%; min-height: 500px; }
+
+    /* ─── TOOLTIP ── */
+    .map-tooltip {
+      position: absolute; top: 1rem; right: 1rem; z-index: 1000;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0.75rem 1rem;
+      font-size: 0.75rem; color: var(--text); min-width: 160px;
+      pointer-events: none; opacity: 0; transition: opacity 0.2s;
+    }
+    .map-tooltip.visible { opacity: 1; }
+    .map-tooltip-day { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent); font-weight: 700; margin-bottom: 0.25rem; }
+    .map-tooltip-route { margin-bottom: 0.15rem; }
+    .map-tooltip-stats { color: var(--text-muted); font-size: 0.65rem; letter-spacing: 0.06em; }
+
+    /* ─── STATS STRIP ── */
+    .stats-strip {
+      border-top: 1px solid var(--border);
+      background: var(--bg-deep);
+      padding: 0.6rem 1.5rem;
+      display: flex; gap: 2.5rem; flex-wrap: wrap;
+      font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .stats-strip span { color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; }
+
+    /* ─── LEAFLET OVERRIDES ── */
+    .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 4px !important; font-family: 'Raleway', sans-serif !important; font-size: 0.8rem !important; }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-popup-content strong { color: var(--accent); font-family: 'Space Mono', monospace; font-size: 0.75rem; display: block; margin-bottom: 0.2rem; }
+
+    @media (max-width: 600px) {
+      .sidebar { display: none; }
+      #map-trip { min-height: 400px; }
+    }
+  </style>
+
+<header class="page-header">
+  <h1>Philadelphia → California</h1>
+  <span class="subtitle">3,753 miles · 9 days · 13 states</span>
+  <MapNav current="trip" />
+</header>
+
+<div class="trip-layout">
+  <!-- sidebar legend -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Days</div>
+  </aside>
+
+  <!-- map -->
+  <div class="map-wrap">
+    <div id="map-trip"></div>
+    <div class="map-tooltip" id="tooltip">
+      <div class="map-tooltip-day" id="tt-day"></div>
+      <div class="map-tooltip-route" id="tt-route"></div>
+      <div class="map-tooltip-stats" id="tt-stats"></div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-strip">
+  <div>Total distance: <span>3,753 mi</span></div>
+  <div>Days: <span>9</span></div>
+  <div>States: <span>13</span></div>
+  <div id="strip-loaded">Tracks: <span id="strip-count">0</span> / 9 loaded</div>
+</div>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
+
+<script is:inline>
+  const DAYS = [
+    { day: 1, from: 'Philadelphia', to: 'Charlotte',  miles: 536, gpx: '/maps/Day 1 - Philly to Charlotte.gpx',            color: '#7ebcd6', date: 'Jan 30' },
+    { day: 2, from: 'Charlotte',    to: 'Montgomery',  miles: 406, gpx: '/maps/Day 2 - Charlotte NC to Montgomery AL.gpx',   color: '#a0c8e0', date: 'Jan 31' },
+    { day: 3, from: 'Montgomery',   to: 'Jackson',     miles: 186, gpx: '/maps/Day 3 - Montgomery AL to Jackson MS.gpx',     color: '#c4782a', date: 'Feb 1'  },
+    { day: 4, from: 'Jackson',      to: 'Austin',      miles: 480, gpx: '/maps/Day 4 - Jackson MS to Austin TX.gpx',         color: '#d4761e', date: 'Feb 2'  },
+    { day: 5, from: 'Austin',       to: 'Terlingua',   miles: 330, gpx: '/maps/Day 5 - Austin TX to Terilingua TX.gpx',      color: '#e8681a', date: 'Feb 3'  },
+    { day: 6, from: 'Terlingua',    to: 'Big Bend',    miles: 62,  gpx: '/maps/Day 6 - Big Bend National Park.gpx',          color: '#d4481a', date: 'Feb 4'  },
+    { day: 7, from: 'Big Bend',     to: 'Big Bend',    miles: 55,  gpx: '/maps/Day 7 - Big Bend National Park.gpx',          color: '#c83a0a', date: 'Feb 5'  },
+    { day: 8, from: 'Terlingua',    to: 'Tucson',      miles: 474, gpx: '/maps/Day 8 - Terilingua TX to Tucson AZ.gpx',      color: '#d4600a', date: 'Feb 6'  },
+    { day: 9, from: 'Tucson',       to: 'California',  miles: 224, gpx: '/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx',     color: '#f5c400', date: 'Feb 7'  },
+  ];
+
+  const map = L.map('map-trip', {
+    scrollWheelZoom: true,
+    center: [35, -90],
+    zoom: 5,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 18,
+    subdomains: 'abcd',
+  }).addTo(map);
+
+  const sidebar = document.getElementById('sidebar');
+  const tooltip = document.getElementById('tooltip');
+  const stripCount = document.getElementById('strip-count');
+  let loadedCount = 0;
+  const allBounds = [];
+  const layersByDay = {};
+
+  DAYS.forEach(d => {
+    // Sidebar item
+    const item = document.createElement('div');
+    item.className = 'day-item';
+    item.id = `sidebar-day-${d.day}`;
+    item.innerHTML = `
+      <div class="day-dot" style="background:${d.color}"></div>
+      <div class="day-info">
+        <div class="day-num">Day ${d.day} · ${d.date}</div>
+        <div class="day-route">${d.from} → ${d.to}</div>
+        <div class="day-miles">${d.miles} mi</div>
+      </div>
+    `;
+    sidebar.appendChild(item);
+
+    // GPX layer
+    const layer = new L.GPX(d.gpx, {
+      async: true,
+      marker_options: { startIconUrl: null, endIconUrl: null, shadowUrl: null, wptIconUrls: { '': null } },
+      polyline_options: { color: d.color, weight: 3.5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' },
+    });
+
+    layer.on('loaded', function(e) {
+      const bounds = e.target.getBounds();
+      allBounds.push(bounds);
+      loadedCount++;
+      stripCount.textContent = loadedCount;
+      if (loadedCount === DAYS.length) {
+        const combined = allBounds.reduce((acc, b) => acc.extend(b));
+        map.fitBounds(combined, { padding: [40, 40] });
+      }
+    });
+
+    // Hover highlight
+    layer.on('mouseover', function() {
+      showTooltip(d);
+      highlightDay(d.day);
+      layer.getLayers().forEach(l => { if (l.setStyle) l.setStyle({ weight: 5.5, opacity: 1 }); });
+    });
+    layer.on('mouseout', function() {
+      hideTooltip();
+      unhighlightDay(d.day);
+      layer.getLayers().forEach(l => { if (l.setStyle) l.setStyle({ weight: 3.5, opacity: 0.85 }); });
+    });
+    layer.on('click', function() {
+      map.fitBounds(layer.getBounds(), { padding: [60, 60] });
+    });
+
+    layer.addTo(map);
+    layersByDay[d.day] = layer;
+
+    // Sidebar click
+    item.addEventListener('click', () => {
+      if (layersByDay[d.day]) {
+        map.fitBounds(layersByDay[d.day].getBounds(), { padding: [60, 60] });
+      }
+      highlightDay(d.day);
+    });
+  });
+
+  function showTooltip(d) {
+    document.getElementById('tt-day').textContent = `Day ${d.day} · ${d.date}`;
+    document.getElementById('tt-route').textContent = `${d.from} → ${d.to}`;
+    document.getElementById('tt-stats').textContent = `${d.miles} mi`;
+    tooltip.classList.add('visible');
+  }
+  function hideTooltip() { tooltip.classList.remove('visible'); }
+
+  function highlightDay(dayNum) {
+    document.querySelectorAll('.day-item').forEach(el => el.classList.remove('active'));
+    const el = document.getElementById(`sidebar-day-${dayNum}`);
+    if (el) {
+      el.classList.add('active');
+      el.style.borderLeftColor = DAYS[dayNum - 1].color;
+    }
+  }
+  function unhighlightDay(dayNum) {
+    const el = document.getElementById(`sidebar-day-${dayNum}`);
+    if (el) { el.classList.remove('active'); el.style.borderLeftColor = 'transparent'; }
+  }
+</script>
+</MapBase>

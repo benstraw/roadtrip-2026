@@ -61,6 +61,7 @@ export interface Day {
   stops: Stop[];
   galleryImages: GalleryImage[];
   music?: MusicEmbed;
+  gpxUrl?: string;
 }
 
 // ─── THEMES ──────────────────────────────────────────────────────────────────
@@ -258,6 +259,7 @@ export const days: Day[] = [
       { src: '/images/days/1/03_life-is-good-red-truck-hat.jpg', alt: 'Life is Good red truck hat', caption: 'Life is Good. Red truck. Seems right.' },
       { src: '/images/days/1/04_city-bbq.jpg', alt: 'City BBQ Charlotte', caption: 'City BBQ, Charlotte. Night one.' },
     ],
+    gpxUrl: '/maps/Day 1 - Philly to Charlotte.gpx',
   },
   {
     day: 2,
@@ -303,6 +305,7 @@ export const days: Day[] = [
       { src: '/images/days/2/20260131_173626-elevate-library.jpg', alt: 'Elevation Hotel library', caption: 'Elevation Convening Center — the library.' },
       { src: '/images/days/2/20260131_173641-elevate-library.jpg', alt: 'Elevation Hotel library detail', caption: 'Good place to land after a snow day.' },
     ],
+    gpxUrl: '/maps/Day 2 - Charlotte NC to Montgomery AL.gpx',
   },
   {
     day: 3,
@@ -367,6 +370,7 @@ export const days: Day[] = [
       { src: '/images/days/3/20260201_180434-welcome-to-mississippi.jpg', alt: 'Welcome to Mississippi sign', caption: 'Mississippi. Moving again.', wide: true },
       { src: '/images/days/3/20260201_193114-evening-arrival.jpg', alt: 'Evening arrival in Jackson', caption: 'Jackson after dark.' },
     ],
+    gpxUrl: '/maps/Day 3 - Montgomery AL to Jackson MS.gpx',
   },
   {
     day: 4,
@@ -411,6 +415,7 @@ export const days: Day[] = [
       { src: '/images/days/4/IMG_20260203_202755-me-driving.jpg', alt: 'Behind the wheel', caption: 'Behind the wheel.' },
       { src: '/images/days/4/IMG_20260203_202803-driving-into-sunset.jpg', alt: 'Driving into the sunset', caption: 'Sun going down over Texas.', wide: true },
     ],
+    gpxUrl: '/maps/Day 4 - Jackson MS to Austin TX.gpx',
   },
   {
     day: 5,
@@ -466,6 +471,7 @@ export const days: Day[] = [
       { src: '/images/days/5/20260203_174613-local-flavor.jpg', alt: 'Local flavor, Terlingua', caption: 'Local flavor.' },
       { src: '/images/days/5/20260203_180032-terilingua-ghost-town-starlight-theater-me-dad.jpg', alt: 'Dad and Ben at the Starlight Theatre', caption: 'Starlight Theatre, Terlingua. Night one.' },
     ],
+    gpxUrl: '/maps/Day 5 - Austin TX to Terilingua TX.gpx',
   },
   {
     day: 6,
@@ -543,6 +549,7 @@ export const days: Day[] = [
       { src: '/images/days/6/20260204_230641-terilingua-sky-airbnb-night-sky.jpg', alt: 'Night sky over Terlingua', caption: 'Stars over Terlingua.', wide: true },
       { src: '/images/days/6/20260204_230915-terilingua-sky-airbnb-night-sky-2.jpg', alt: 'Night sky over Terlingua', caption: 'No light. No ceiling. Just this.', wide: true },
     ],
+    gpxUrl: '/maps/Day 6 - Big Bend National Park.gpx',
   },
   {
     day: 7,
@@ -629,6 +636,7 @@ export const days: Day[] = [
       { src: '/images/days/7/20260205_232940-terilingua-sky-night-3.jpg', alt: 'Night sky over Terlingua', caption: 'Last night under this sky.' },
       { src: '/images/days/7/20260205_232958-terilingua-sky-night-4.jpg', alt: 'Night sky over Terlingua', caption: 'No light for miles in any direction.' },
     ],
+    gpxUrl: '/maps/Day 7 - Big Bend National Park.gpx',
   },
   {
     day: 8,
@@ -690,6 +698,7 @@ export const days: Day[] = [
       { src: '/images/days/8/20260206_142146-NM-desert.jpg', alt: 'New Mexico desert', caption: 'New Mexico desert.' },
       { src: '/images/days/8/20260206_184626-el-chorro.jpg', alt: 'El Chorro, Tucson', caption: 'El Chorro, Tucson. Since 1922.' },
     ],
+    gpxUrl: '/maps/Day 8 - Terilingua TX to Tucson AZ.gpx',
   },
   {
     day: 9,
@@ -739,6 +748,7 @@ export const days: Day[] = [
       { src: '/images/days/9/20260207_183023-final-mileage-3753-2.jpg', alt: 'Final trip mileage: 3,753 miles', caption: '3,753 miles.' },
       { src: '/images/days/9/20260207_212434-california-palm-tree-lined-street.jpg', alt: 'California palm tree lined street', caption: 'Palm trees. Made it.', wide: true },
     ],
+    gpxUrl: '/maps/Day 9 - Tucson AZ to Los Angeles CA.gpx',
   },
 ];
 
@@ -747,7 +757,7 @@ export const tripTotals = {
   // Odometer-verified total from Day 9 photo — includes city driving, park roads, side trips
   odometerMiles: 3753,
   days: days.length,
-  states: ['PA', 'MD', 'VA', 'NC', 'SC', 'GA', 'AL', 'MS', 'LA', 'TX', 'NM', 'AZ', 'CA'],
+  states: ['PA', 'DE', 'MD', 'VA', 'NC', 'SC', 'GA', 'AL', 'MS', 'LA', 'TX', 'NM', 'AZ', 'CA'],
   totalMeals: days.reduce((acc, d) => acc + d.meals.length, 0),
   totalStops: days.reduce((acc, d) => acc + d.stops.length, 0),
   totalPhotos: days.reduce((acc, d) => acc + d.galleryImages.filter(g => !g.video).length, 0),

@@ -1,0 +1,79 @@
+---
+interface Props {
+  current: 'ridge' | 'elevation' | 'trip' | 'experiments' | 'tech' | 'mapbook';
+}
+const { current } = Astro.props;
+
+const links = [
+  { id: 'ridge',       label: 'The Ridge',  href: '/mapridge' },
+  { id: 'elevation',   label: 'Elevation',  href: '/mapelevation' },
+  { id: 'trip',        label: 'Full Trip',  href: '/maptrip' },
+  { id: 'experiments', label: 'Experiments',href: '/mapwild' },
+  { id: 'mapbook',     label: 'Tile Styles', href: '/mapbook' },
+  { id: 'tech',        label: 'Tech',       href: '/maptech' },
+];
+---
+
+<nav class="map-nav">
+  {links.map(l => (
+    <a
+      href={l.href}
+      class:list={['map-nav-link', { active: l.id === current }]}
+    >
+      {l.label}
+    </a>
+  ))}
+  <span class="map-nav-divider"></span>
+  <a href="/" class="map-nav-link back">← Trip</a>
+</nav>
+
+<style>
+  .map-nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+  }
+
+  .map-nav-link {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4a4540;
+    text-decoration: none;
+    padding: 0.3rem 0.65rem;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .map-nav-link:hover {
+    color: #c8a84a;
+    background: rgba(200, 168, 74, 0.07);
+  }
+
+  .map-nav-link.active {
+    color: #c8a84a;
+    background: rgba(200, 168, 74, 0.12);
+  }
+
+  .map-nav-divider {
+    width: 1px;
+    height: 14px;
+    background: #1a1f26;
+    margin: 0 0.25rem;
+  }
+
+  .map-nav-link.back {
+    color: #3a3630;
+    font-family: 'Raleway', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .map-nav-link.back:hover {
+    color: #c8a84a;
+    background: rgba(200, 168, 74, 0.07);
+  }
+</style>

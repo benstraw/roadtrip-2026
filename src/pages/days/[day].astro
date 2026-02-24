@@ -289,6 +289,22 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
     opacity: 0.7;
   }
 
+  .stat-map-link {
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .stat-map-link:hover { opacity: 0.7; }
+  .stat-map-link .stat-lbl {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .stat-map-link .stat-lbl svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0.7;
+  }
+
   /* ─── MAIN CONTENT ──────────────────────────────────────────────────────────── */
   .day-content {
     max-width: 760px;
@@ -659,6 +675,20 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
         <span class="stat-lbl">
           {day.galleryImages.filter(i => i.video).length > 0 ? 'photos & video' : 'photos'}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="8,3 8,13"/><polyline points="4,9 8,13 12,9"/></svg>
+        </span>
+      </a>
+    </>
+  )}
+  {day.gpxUrl && (
+    <>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <a href="/mapbook" class="stat-item stat-map-link" aria-label="View route map">
+        <span class="stat-val">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="width:1rem;height:1rem;vertical-align:middle;"><path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="stat-lbl">
+          route
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="4,8 12,8"/><polyline points="9,5 12,8 9,11"/></svg>
         </span>
       </a>
     </>
