@@ -91,7 +91,7 @@ export async function generateOgImage(title: string, subtitle?: string): Promise
                       color: 'rgba(255,255,255,0.4)',
                       textTransform: 'uppercase',
                     },
-                    children: 'PHILLY \u2192 LOS ANGELES  \u00B7  2025',
+                    children: 'PHILLY \u2192 LOS ANGELES  \u00B7  2026',
                   },
                 },
                 // Main title
