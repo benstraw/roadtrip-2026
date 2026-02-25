@@ -1,0 +1,365 @@
+---
+import Base from '../layouts/Base.astro';
+import Gallery from '../components/Gallery.astro';
+import { groupGalleryItemsByDay, tripTotals } from '../data/days';
+
+const grouped = groupGalleryItemsByDay();
+const allImages = grouped.flatMap(({ images }) => images);
+let runningIndex = 0;
+const groupedWithOffsets = grouped.map((entry) => {
+  const startIndex = runningIndex;
+  runningIndex += entry.images.length;
+  return { ...entry, startIndex };
+});
+---
+
+<Base title="Photo Gallery - The Road" description="All photos and videos from the nine-day father-and-son road trip.">
+<style>
+  :root {
+    --bg: #0c1420;
+    --bg-deep: #070d18;
+    --surface: #111e30;
+    --accent: #c8a84a;
+    --accent-soft: #8a7030;
+    --text: #e8e0cc;
+    --text-muted: #8a8068;
+    --border: rgba(200,168,74,0.15);
+  }
+
+  body { background: var(--bg); color: var(--text); }
+
+  .photos-hero {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 3.5rem) clamp(1.2rem, 4vw, 2rem) 1.4rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(200, 168, 74, 0.45);
+    background: rgba(7, 16, 26, 0.5);
+    border-radius: 3px;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .back-link svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  h1 {
+    margin-top: 1rem;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-sub {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .stat-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 0.38rem 0.52rem;
+    border: 1px solid var(--border);
+    background: rgba(200,168,74,0.08);
+    border-radius: 2px;
+  }
+
+  .day-filter {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    background: linear-gradient(to bottom, rgba(12,20,32,0.96), rgba(12,20,32,0.82));
+    backdrop-filter: blur(6px);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem clamp(1.2rem, 4vw, 2rem);
+  }
+
+  .day-filter-inner {
+    max-width: 1040px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .day-filter-inner::-webkit-scrollbar { display: none; }
+
+  .mobile-day-controls {
+    display: none;
+    max-width: 1040px;
+    margin: 0 auto;
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .mobile-nav-btn {
+    border: 1px solid rgba(200,168,74,0.45);
+    background: rgba(200,168,74,0.09);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.45rem 0.55rem;
+    border-radius: 3px;
+    min-width: 3.2rem;
+  }
+
+  .mobile-day-select {
+    flex: 1;
+    border: 1px solid rgba(200,168,74,0.5);
+    background: #0a1420;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.6rem;
+    border-radius: 3px;
+  }
+
+  .chip {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: rgba(17,30,48,0.7);
+    border-radius: 999px;
+    padding: 0.38rem 0.72rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .chip.active {
+    color: var(--bg);
+    border-color: rgba(200,168,74,0.95);
+    background: var(--accent);
+  }
+
+  .photos-wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 1.2rem 4rem;
+  }
+
+  .photos-day-section {
+    padding: 1.6rem 0 0.4rem;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .photos-day-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+    color: var(--text);
+  }
+
+  .section-route {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .section-tools {
+    margin-bottom: 0.4rem;
+  }
+
+  .section-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .day-filter-inner {
+      display: none;
+    }
+
+    .mobile-day-controls {
+      display: flex;
+    }
+
+    .photos-wrap {
+      padding: 0 0.9rem 3rem;
+    }
+  }
+</style>
+
+<section class="photos-hero">
+  <a class="back-link" href="/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="15,18 9,12 15,6"/>
+    </svg>
+    Back to All Days
+  </a>
+  <h1>Photo Gallery</h1>
+  <p class="hero-sub">Every photo and video from the trip, grouped by day.</p>
+  <div class="stats">
+    <span class="stat-pill">{tripTotals.totalPhotos} photos</span>
+    <span class="stat-pill">{tripTotals.totalVideos} videos</span>
+    <span class="stat-pill">{grouped.length} days</span>
+  </div>
+</section>
+
+<div class="day-filter" aria-label="Filter day groups">
+  <div class="day-filter-inner">
+    <button class="chip active" data-day="all">All Days</button>
+    {grouped.map(({ day }) => (
+      <button class="chip" data-day={String(day.day)}>{`Day ${day.day}`}</button>
+    ))}
+  </div>
+  <div class="mobile-day-controls">
+    <button id="mobile-prev" class="mobile-nav-btn" type="button">Prev</button>
+    <select id="mobile-day-select" class="mobile-day-select" aria-label="Select gallery day">
+      <option value="all">All Days</option>
+      {grouped.map(({ day }) => (
+        <option value={String(day.day)}>{`Day ${day.day}`}</option>
+      ))}
+    </select>
+    <button id="mobile-next" class="mobile-nav-btn" type="button">Next</button>
+  </div>
+</div>
+
+<main class="photos-wrap">
+  {groupedWithOffsets.map(({ day, images, startIndex }) => (
+    <section class="photos-day-section" data-day={String(day.day)} id={`day-${day.day}`}>
+      <div class="section-head">
+        <h2 class="section-title">Day {day.day} - {day.dayOfWeek}, {day.date}</h2>
+        <p class="section-route">{day.fromShort} -&gt; {day.toShort}</p>
+      </div>
+      <div class="section-tools">
+        <a class="section-link" href={`/days/${day.slug}`}>Back to Day {day.day} story -&gt;</a>
+      </div>
+      <Gallery
+        images={images}
+        dayNum={day.day}
+        galleryId={`photos-day-${day.day}`}
+        title=""
+        emptyLabel="No photos for this day"
+        lightboxImages={allImages}
+        lightboxStartIndex={startIndex}
+      />
+    </section>
+  ))}
+</main>
+
+<script is:inline>
+  (function() {
+    const sections = Array.from(document.querySelectorAll('.photos-day-section'));
+    const chips = Array.from(document.querySelectorAll('.chip'));
+    const mobileSelect = document.getElementById('mobile-day-select');
+    const mobilePrev = document.getElementById('mobile-prev');
+    const mobileNext = document.getElementById('mobile-next');
+    const mobileOptions = ['all', ...sections.map((section) => section.dataset.day)];
+
+    function syncMobileControls(day) {
+      if (!mobileSelect || !mobilePrev || !mobileNext) return;
+      mobileSelect.value = day;
+      const idx = mobileOptions.indexOf(day);
+      mobilePrev.disabled = idx <= 0;
+      mobileNext.disabled = idx === -1 || idx >= mobileOptions.length - 1;
+    }
+
+    function setActiveChip(day) {
+      chips.forEach((chip) => {
+        chip.classList.toggle('active', chip.dataset.day === day);
+      });
+    }
+
+    function applyFilter(day, updateUrl = true) {
+      const showAll = day === 'all';
+      sections.forEach((section) => {
+        const match = section.dataset.day === day;
+        section.style.display = (showAll || match) ? '' : 'none';
+      });
+
+      setActiveChip(day);
+      syncMobileControls(day);
+
+      if (updateUrl) {
+        const next = new URL(window.location.href);
+        if (showAll) {
+          next.searchParams.delete('day');
+        } else {
+          next.searchParams.set('day', day);
+        }
+        history.replaceState({}, '', `${next.pathname}${next.search}${next.hash}`);
+      }
+    }
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => applyFilter(chip.dataset.day || 'all'));
+    });
+
+    if (mobileSelect && mobilePrev && mobileNext) {
+      mobileSelect.addEventListener('change', (e) => {
+        applyFilter(e.target.value || 'all');
+      });
+
+      mobilePrev.addEventListener('click', () => {
+        const idx = mobileOptions.indexOf(mobileSelect.value || 'all');
+        const nextIdx = Math.max(0, idx - 1);
+        applyFilter(mobileOptions[nextIdx]);
+      });
+
+      mobileNext.addEventListener('click', () => {
+        const idx = mobileOptions.indexOf(mobileSelect.value || 'all');
+        const nextIdx = Math.min(mobileOptions.length - 1, idx + 1);
+        applyFilter(mobileOptions[nextIdx]);
+      });
+    }
+
+    const initialDay = new URLSearchParams(window.location.search).get('day');
+    if (initialDay && sections.some((s) => s.dataset.day === initialDay)) {
+      applyFilter(initialDay, false);
+      document.getElementById(`day-${initialDay}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      applyFilter('all', false);
+    }
+  })();
+</script>
+</Base>

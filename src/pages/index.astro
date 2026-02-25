@@ -435,6 +435,14 @@ import { days } from '../data/days';
         </svg>
         Almanac
       </a>
+      <a href="/photos" class="hero-secondary-link">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="5" width="18" height="14" rx="2"/>
+          <circle cx="9" cy="10" r="1.4"/>
+          <path d="M6 16l4-4 3 3 3-2 2 3"/>
+        </svg>
+        Photo Gallery
+      </a>
     </div>
   </div>
 
@@ -509,6 +517,8 @@ import { days } from '../data/days';
     <a href="/mapbook" class="almanac-link">Map Book →</a>
     &nbsp;·&nbsp;
     <a href="/maptech" class="almanac-link">Map Experiments →</a>
+    &nbsp;·&nbsp;
+    <a href="/photos" class="almanac-link">Photo Gallery →</a>
   </small>
 </footer>
 
@@ -545,7 +555,9 @@ import { days } from '../data/days';
     pane: 'overlayPane',
   }).addTo(heroMap);
 
-  heroMap.setView([36.5, -95], 4);
+  const tripStart = [39.94, -75.15];
+  const tripEnd = [34.05, -118.24];
+  heroMap.setView(tripStart, 7, { animate: false });
 
   // ── Static GPX tracks ──────────────────────────────────────────────────────
   const gpxLayers = [];
@@ -565,7 +577,7 @@ import { days } from '../data/days';
       if (gpxLoaded === HERO_DAYS.length) {
         fullBounds = L.latLngBounds(boundsArr[0].getSouthWest(), boundsArr[0].getNorthEast());
         for (var i = 1; i < boundsArr.length; i++) fullBounds.extend(boundsArr[i]);
-        heroMap.fitBounds(fullBounds, { padding: [60, 60], animate: false });
+        heroMap.setView(tripStart, replayFollowZoom, { animate: false });
       }
     });
     layer.addTo(heroMap);
@@ -641,6 +653,9 @@ import { days } from '../data/days';
   var btnPlayIcon = '<svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" aria-hidden="true"><polygon points="0,0 9,5 0,10"/></svg>';
   var btnStopIcon = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><rect width="10" height="10" rx="1.5"/></svg>';
 
+  // Show the truck at the trip start on initial homepage load.
+  truckMarker = L.marker(tripStart, { icon: truckIcon, zIndexOffset: 1000 }).addTo(heroMap);
+
   function finishReplay() {
     cancelAnimationFrame(replayAnimFrame);
     replayAnimFrame = null;
@@ -651,8 +666,8 @@ import { days } from '../data/days';
     replayLastTs = null;
     replayLastPanTs = 0;
 
-    // Remove truck
-    if (truckMarker) { heroMap.removeLayer(truckMarker); truckMarker = null; }
+    // Keep truck on map after replay, now at the endpoint.
+    if (truckMarker) truckMarker.setLatLng(tripEnd);
 
     // Remove animated lines
     Object.values(replayLines).forEach(function(l) { heroMap.removeLayer(l); });
@@ -662,8 +677,8 @@ import { days } from '../data/days';
     // Restore static tracks
     gpxLayers.forEach(function(l) { l.addTo(heroMap); });
 
-    // Fit back to full bounds
-    if (fullBounds) heroMap.fitBounds(fullBounds, { padding: [60, 60], animate: true, duration: 0.8 });
+    // Leave map at trip endpoint after replay.
+    heroMap.setView(tripEnd, replayFollowZoom, { animate: true });
 
     // Reset button
     replayBtn.innerHTML = btnPlayIcon + ' Drive Again';
@@ -719,10 +734,11 @@ import { days } from '../data/days';
     });
 
     // Place truck at Philly
-    truckMarker = L.marker([39.94, -75.15], { icon: truckIcon, zIndexOffset: 1000 }).addTo(heroMap);
+    if (!truckMarker) truckMarker = L.marker(tripStart, { icon: truckIcon, zIndexOffset: 1000 }).addTo(heroMap);
+    else truckMarker.setLatLng(tripStart);
 
     // Snap map to the truck and stay locked during replay
-    heroMap.setView([39.94, -75.15], replayFollowZoom, { animate: true });
+    heroMap.setView(tripStart, replayFollowZoom, { animate: true });
 
     replayBtn.innerHTML = btnStopIcon + ' Stop';
     replayBtn.classList.add('playing');
