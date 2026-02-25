@@ -3,26 +3,53 @@ import type { GalleryImage } from '../data/days';
 
 interface Props {
   images: GalleryImage[];
-  dayNum: number;
+  dayNum?: number;
+  galleryId?: string;
+  title?: string;
+  emptyLabel?: string;
+  lightboxImages?: GalleryImage[];
+  lightboxStartIndex?: number;
 }
 
-const { images, dayNum } = Astro.props;
+const {
+  images,
+  dayNum,
+  galleryId = dayNum ? 'gallery' : 'gallery-global',
+  title = 'Gallery',
+  emptyLabel = 'Photos coming soon',
+  lightboxImages,
+  lightboxStartIndex = 0,
+} = Astro.props;
+
 const hasImages = images.length > 0;
 const videoCount = images.filter(i => i.video).length;
 const photoCount = images.length - videoCount;
 const countLabel = videoCount > 0
-  ? `— ${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''}`
-  : `— ${images.length} photos`;
+  ? `- ${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''}`
+  : `- ${images.length} photos`;
+
+const sectionId = galleryId;
+const gridId = `${galleryId}-grid`;
+const lightboxId = `${galleryId}-lightbox`;
+const lbCloseId = `${galleryId}-close`;
+const lbPrevId = `${galleryId}-prev`;
+const lbNextId = `${galleryId}-next`;
+const lbImgId = `${galleryId}-img`;
+const lbVideoId = `${galleryId}-video`;
+const lbCaptionId = `${galleryId}-caption`;
+const lbCounterId = `${galleryId}-counter`;
 ---
 
-<section class="gallery-section" id="gallery">
-  <h2 class="gallery-title">
-    <span class="hand">Gallery</span>
-    <span class="mono gallery-count">{countLabel}</span>
-  </h2>
+<section class="gallery-section" id={sectionId} data-gallery-id={galleryId}>
+  {title && (
+    <h2 class="gallery-title">
+      <span class="hand">{title}</span>
+      <span class="mono gallery-count">{countLabel}</span>
+    </h2>
+  )}
 
   {hasImages ? (
-    <div class="pig-grid" id="pigGrid" role="list">
+    <div class="pig-grid" id={gridId} role="list">
       {images.map((img, i) => (
         <figure
           class={`pig-item ${img.wide ? 'wide' : ''}`}
@@ -84,52 +111,60 @@ const countLabel = videoCount > 0
     </div>
   ) : (
     <div class="gallery-empty">
-      <p class="hand">Photos coming soon</p>
+      <p class="hand">{emptyLabel}</p>
     </div>
   )}
 </section>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Media viewer" hidden>
-  <button class="lb-close" aria-label="Close" id="lbClose">
+<div class="lightbox" id={lightboxId} role="dialog" aria-modal="true" aria-label="Media viewer" hidden>
+  <button class="lb-close" aria-label="Close" id={lbCloseId}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="18" y1="6" x2="6" y2="18"/>
       <line x1="6" y1="6" x2="18" y2="18"/>
     </svg>
   </button>
 
-  <button class="lb-prev" aria-label="Previous" id="lbPrev">
+  <button class="lb-prev" aria-label="Previous" id={lbPrevId}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <polyline points="15,18 9,12 15,6"/>
     </svg>
   </button>
 
   <div class="lb-content">
-    <img src="" alt="" id="lbImg" class="lb-img" style="display:none" />
-    <video src="" id="lbVideo" class="lb-video lb-img" controls playsinline style="display:none"></video>
+    <img src="" alt="" id={lbImgId} class="lb-img" style="display:none" />
+    <video src="" id={lbVideoId} class="lb-video lb-img" controls playsinline style="display:none"></video>
     <div class="lb-caption-wrap">
-      <p class="lb-caption" id="lbCaption"></p>
-      <span class="lb-counter" id="lbCounter"></span>
+      <p class="lb-caption" id={lbCaptionId}></p>
+      <span class="lb-counter" id={lbCounterId}></span>
     </div>
   </div>
 
-  <button class="lb-next" aria-label="Next" id="lbNext">
+  <button class="lb-next" aria-label="Next" id={lbNextId}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <polyline points="9,18 15,12 9,6"/>
     </svg>
   </button>
 </div>
 
-<script define:vars={{ images, dayNum }}>
+<script define:vars={{ images, galleryId, lightboxImages, lightboxStartIndex }}>
+  const root = document.querySelector(`[data-gallery-id="${galleryId}"]`);
+  const lightbox = document.getElementById(`${galleryId}-lightbox`);
+  const lbImg = document.getElementById(`${galleryId}-img`);
+  const lbVideo = document.getElementById(`${galleryId}-video`);
+  const lbCaption = document.getElementById(`${galleryId}-caption`);
+  const lbCounter = document.getElementById(`${galleryId}-counter`);
+  const lbClose = document.getElementById(`${galleryId}-close`);
+  const lbPrev = document.getElementById(`${galleryId}-prev`);
+  const lbNext = document.getElementById(`${galleryId}-next`);
+
+  if (!root || !lightbox || !lbImg || !lbVideo || !lbCaption || !lbCounter || !lbClose || !lbPrev || !lbNext) {
+    return;
+  }
+
+  const activeImages = Array.isArray(lightboxImages) && lightboxImages.length > 0
+    ? lightboxImages
+    : images;
   let current = 0;
-  const lightbox = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lbImg');
-  const lbVideo = document.getElementById('lbVideo');
-  const lbCaption = document.getElementById('lbCaption');
-  const lbCounter = document.getElementById('lbCounter');
-  const lbClose = document.getElementById('lbClose');
-  const lbPrev = document.getElementById('lbPrev');
-  const lbNext = document.getElementById('lbNext');
 
   function stopVideo() {
     if (lbVideo.style.display !== 'none') {
@@ -139,7 +174,7 @@ const countLabel = videoCount > 0
   }
 
   function openLightbox(index) {
-    current = index;
+    current = Math.min(index + lightboxStartIndex, activeImages.length - 1);
     updateLightbox();
     lightbox.hidden = false;
     lightbox.classList.add('visible');
@@ -152,10 +187,16 @@ const countLabel = videoCount > 0
     lightbox.classList.remove('visible');
     setTimeout(() => { lightbox.hidden = true; }, 280);
     document.body.style.overflow = '';
+    const closeUrl = new URL(window.location.href);
+    if (closeUrl.searchParams.get('gallery') === galleryId) {
+      closeUrl.searchParams.delete('gallery');
+      closeUrl.searchParams.delete('photo');
+      history.replaceState({}, '', `${closeUrl.pathname}${closeUrl.search}${closeUrl.hash}`);
+    }
   }
 
   function updateLightbox() {
-    const item = images[current];
+    const item = activeImages[current];
     if (!item) return;
 
     stopVideo();
@@ -172,9 +213,17 @@ const countLabel = videoCount > 0
     }
 
     lbCaption.textContent = item.caption || item.alt || '';
-    lbCounter.textContent = `${current + 1} / ${images.length}`;
+    lbCounter.textContent = `${current + 1} / ${activeImages.length}`;
     lbPrev.disabled = current === 0;
-    lbNext.disabled = current === images.length - 1;
+    lbNext.disabled = current === activeImages.length - 1;
+
+    // Keep URL shareable for the currently open slideshow position.
+    if (!lightbox.hidden) {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set('gallery', galleryId);
+      nextUrl.searchParams.set('photo', String(current));
+      history.replaceState({}, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+    }
   }
 
   function prev() {
@@ -182,11 +231,10 @@ const countLabel = videoCount > 0
   }
 
   function next() {
-    if (current < images.length - 1) { current++; updateLightbox(); }
+    if (current < activeImages.length - 1) { current++; updateLightbox(); }
   }
 
-  // Wire up triggers
-  document.querySelectorAll('.pig-trigger').forEach((btn) => {
+  root.querySelectorAll('.pig-trigger').forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.index, 10);
       openLightbox(idx);
@@ -208,13 +256,25 @@ const countLabel = videoCount > 0
     if (e.key === 'ArrowRight') next();
   });
 
-  // Touch swipe
   let touchStartX = 0;
   lightbox.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
   lightbox.addEventListener('touchend', (e) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
   });
+
+  // Deep-link support: open a specific slideshow at a specific index.
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('gallery') === galleryId) {
+    const requested = parseInt(params.get('photo') || '', 10);
+    if (!Number.isNaN(requested)) {
+      current = Math.max(0, Math.min(requested, activeImages.length - 1));
+      updateLightbox();
+      lightbox.hidden = false;
+      lightbox.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+  }
 </script>
 
 <style>
@@ -242,7 +302,6 @@ const countLabel = videoCount > 0
     letter-spacing: 0.1em;
   }
 
-  /* PIG-style justified grid */
   .pig-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -305,7 +364,6 @@ const countLabel = videoCount > 0
     transition: opacity 0.3s;
   }
 
-  /* Show placeholder when no real image (src ends in placeholder) */
   img[src*="placeholder"] ~ .img-placeholder,
   .pig-img-wrap:not(:has(img[src]:not([src*="placeholder"]))) .img-placeholder {
     opacity: 1;
@@ -338,7 +396,6 @@ const countLabel = videoCount > 0
     transition: opacity 0.25s ease;
   }
 
-  /* Video items: always show play icon at low opacity */
   .pig-overlay--video {
     opacity: 0.75;
     background: transparent;
@@ -400,7 +457,6 @@ const countLabel = videoCount > 0
     color: var(--text-muted, #8ab4cc);
   }
 
-  /* ─── LIGHTBOX ──────────────────────────────────────────────────────────────── */
   .lightbox {
     position: fixed;
     inset: 0;
@@ -508,6 +564,7 @@ const countLabel = videoCount > 0
       grid-template-columns: repeat(2, 1fr);
       grid-auto-rows: 140px;
     }
+
     .pig-item.wide { grid-column: span 2; }
   }
 </style>

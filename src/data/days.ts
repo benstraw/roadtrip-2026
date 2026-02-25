@@ -787,6 +787,38 @@ export const tripTotals = {
   highPointLabel: 'Chisos Basin, Big Bend NP',
 };
 
+export interface GalleryItem extends GalleryImage {
+  id: string;
+  day: number;
+  daySlug: string;
+  dayDate: string;
+  dayOfWeek: string;
+  fromShort: string;
+  toShort: string;
+}
+
+export function getAllGalleryItems(): GalleryItem[] {
+  return days.flatMap((day) =>
+    day.galleryImages.map((image, index) => ({
+      ...image,
+      id: `day-${day.day}-media-${index + 1}`,
+      day: day.day,
+      daySlug: day.slug,
+      dayDate: day.date,
+      dayOfWeek: day.dayOfWeek,
+      fromShort: day.fromShort,
+      toShort: day.toShort,
+    }))
+  );
+}
+
+export function groupGalleryItemsByDay(): Array<{ day: Day; images: GalleryImage[] }> {
+  return days.map((day) => ({
+    day,
+    images: day.galleryImages,
+  }));
+}
+
 // ─── PHOTO GUIDE ─────────────────────────────────────────────────────────────
 //
 // TO ADD PHOTOS: Drop images into /public/images/days/<day-number>/

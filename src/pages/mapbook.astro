@@ -112,10 +112,29 @@ import MapBase from '../layouts/MapBase.astro';
     opacity: 0; transition: opacity 0.2s; pointer-events: none;
     display: none;
   }
-  .info-overlay.visible { opacity: 1; display: block; }
+  .info-overlay.visible { opacity: 1; display: block; pointer-events: auto; }
   .ov-day { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--accent); font-weight: 700; margin-bottom: 0.2rem; }
   .ov-route { font-size: 0.78rem; color: var(--text); margin-bottom: 0.15rem; }
   .ov-stat { color: var(--text-muted); font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.05em; }
+  .ov-links {
+    margin-top: 0.45rem;
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+  .ov-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(200,168,74,0.35);
+  }
+  .ov-link:hover {
+    color: color-mix(in srgb, var(--accent) 80%, white 20%);
+    border-color: color-mix(in srgb, var(--accent) 65%, white 35%);
+  }
 
   /* ── ELEVATION PANEL ── */
   .elev-panel {
@@ -210,6 +229,10 @@ import MapBase from '../layouts/MapBase.astro';
       <div class="ov-day" id="ov-day"></div>
       <div class="ov-route" id="ov-route"></div>
       <div class="ov-stat" id="ov-stat"></div>
+      <div class="ov-links">
+        <a id="ov-diary-link" class="ov-link" href="/">Diary Day</a>
+        <a id="ov-photos-link" class="ov-link" href="/photos">Photo Album</a>
+      </div>
     </div>
   </div>
 
@@ -509,6 +532,10 @@ async function selectDay(num) {
   document.getElementById('ov-day').textContent = `Day ${num}  ·  ${day.date}`;
   document.getElementById('ov-route').textContent = `${day.from} → ${day.to}`;
   document.getElementById('ov-stat').textContent = `${day.miles} mi (GPS)`;
+  const diaryLink = document.getElementById('ov-diary-link');
+  const photosLink = document.getElementById('ov-photos-link');
+  if (diaryLink) diaryLink.href = `/days/${num}`;
+  if (photosLink) photosLink.href = `/photos?day=${num}`;
   document.getElementById('info-overlay').classList.add('visible');
 
   // Elevation panel — open and decide when to fly
