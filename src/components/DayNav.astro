@@ -109,11 +109,6 @@ const nextDay = days.find(d => d.day === currentDay + 1);
   <div class="nav-hint" aria-hidden="true">
     <kbd>←</kbd> <kbd>→</kbd> navigate days
   </div>
-  <div class="nav-photos-link-wrap">
-    <a href="/photos" class="nav-photos-link" aria-label="Open full photo gallery">
-      Full Photo Gallery
-    </a>
-  </div>
 </nav>
 
 <!-- Keyboard navigation -->
@@ -342,25 +337,6 @@ const nextDay = days.find(d => d.day === currentDay + 1);
     color: rgba(255,255,255,0.2);
     letter-spacing: 0.1em;
     padding-bottom: 2px;
-  }
-
-  .nav-photos-link-wrap {
-    text-align: center;
-    padding-bottom: 4px;
-  }
-
-  .nav-photos-link {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent, #7ebcd6);
-    border-bottom: 1px solid rgba(200,168,74,0.35);
-  }
-
-  .nav-photos-link:hover {
-    color: color-mix(in srgb, var(--accent, #7ebcd6) 80%, white 20%);
-    border-color: color-mix(in srgb, var(--accent, #7ebcd6) 65%, white 35%);
   }
 
   kbd {
