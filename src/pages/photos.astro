@@ -34,6 +34,13 @@ const groupedWithOffsets = grouped.map((entry) => {
     padding: clamp(2rem, 6vw, 3.5rem) clamp(1.2rem, 4vw, 2rem) 1.4rem;
   }
 
+  .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
   .back-link {
     display: inline-flex;
     align-items: center;
@@ -230,12 +237,16 @@ const groupedWithOffsets = grouped.map((entry) => {
 </style>
 
 <section class="photos-hero">
-  <a class="back-link" href="/">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="15,18 9,12 15,6"/>
-    </svg>
-    Back to All Days
-  </a>
+  <nav class="nav-links">
+    <a class="back-link" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"/>
+      </svg>
+      Back to All Days
+    </a>
+    <a class="back-link" href="/mapbook">Map Book</a>
+    <a class="back-link" href="/almanac">Almanac</a>
+  </nav>
   <h1>Photo Gallery</h1>
   <p class="hero-sub">Every photo and video from the trip, grouped by day.</p>
   <div class="stats">
