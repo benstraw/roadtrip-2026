@@ -19,7 +19,7 @@ const uid = Math.random().toString(36).slice(2, 8);
       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
     </svg>
-    Share
+    <span class="share-label">Share</span>
   </button>
 
   <div class="share-dialog" id={`share-dialog-${uid}`} hidden role="dialog" aria-modal="true" aria-label="Share options">
@@ -43,6 +43,8 @@ const uid = Math.random().toString(36).slice(2, 8);
           </svg>
         </button>
       </div>
+
+      <div class="share-url-preview" id={`share-url-${uid}`}></div>
 
       <div class="share-dialog-options">
         <!-- Copy link -->
@@ -87,11 +89,13 @@ const uid = Math.random().toString(36).slice(2, 8);
   const emailBtn= document.getElementById('email-btn-'     + uid);
   const printBtn= document.getElementById('print-btn-'     + uid);
   const copyFb  = document.getElementById('copy-fb-'       + uid);
+  const urlPreview = document.getElementById('share-url-'  + uid);
 
   function openDialog() {
     emailBtn.href =
       'mailto:?subject=' + encodeURIComponent(document.title) +
       '&body=' + encodeURIComponent(window.location.href);
+    if (urlPreview) urlPreview.textContent = window.location.pathname;
     dialog.hidden = false;
     closeBtn.focus();
   }
@@ -162,6 +166,8 @@ const uid = Math.random().toString(36).slice(2, 8);
     color: var(--accent, #c8a84a);
     border: 1px solid rgba(200, 168, 74, 0.42);
     background: rgba(7, 16, 26, 0.44);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border-radius: 3px;
     padding: 0.38rem 0.62rem;
     cursor: pointer;
@@ -181,12 +187,19 @@ const uid = Math.random().toString(36).slice(2, 8);
     flex-shrink: 0;
   }
 
+  /* Hide label text on small screens — icon alone is sufficient */
+  @media (max-width: 480px) {
+    .share-btn .share-label { display: none; }
+  }
+
   /* ── NAV VARIANT: flush button for DayNav filmstrip-wrapper ─────────────── */
   .share-wrap--nav .share-btn {
     border-radius: 0;
     border: none;
     border-left: 1px solid var(--border, rgba(255,255,255,0.06));
     background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     padding: 0 0.75rem;
     color: var(--text-muted, #8ab4cc);
     align-self: stretch;
@@ -230,10 +243,15 @@ const uid = Math.random().toString(36).slice(2, 8);
     -webkit-backdrop-filter: blur(2px);
   }
 
+  @keyframes shareIn {
+    from { opacity: 0; transform: scale(0.96) translateY(4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
   .share-dialog-inner {
     position: relative;
     z-index: 1;
-    background: #0f1c2e;
+    background: var(--surface, #0f1c2e);
     border: 1px solid rgba(200, 168, 74, 0.35);
     border-radius: 6px;
     padding: 1.25rem;
@@ -241,13 +259,20 @@ const uid = Math.random().toString(36).slice(2, 8);
     max-width: 340px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    animation: shareIn 0.16s cubic-bezier(0.2, 0, 0.2, 1) both;
+  }
+
+  @media (max-width: 480px) {
+    .share-dialog-inner {
+      max-width: calc(100vw - 2rem);
+    }
   }
 
   .share-dialog-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
@@ -290,6 +315,20 @@ const uid = Math.random().toString(36).slice(2, 8);
     height: 16px;
   }
 
+  /* ── URL PREVIEW CHIP ─────────────────────────────────────────────────────── */
+  .share-url-preview {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.28);
+    padding: 0 0 0.65rem;
+    margin-bottom: 0.65rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* ── OPTIONS LIST ─────────────────────────────────────────────────────────── */
   .share-dialog-options {
     display: flex;
@@ -301,13 +340,14 @@ const uid = Math.random().toString(36).slice(2, 8);
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.8rem 1rem;
+    padding: 0.6rem 0.85rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 4px;
     color: #e8e0cc;
     font-family: 'Raleway', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
     cursor: pointer;
     text-decoration: none;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -324,7 +364,7 @@ const uid = Math.random().toString(36).slice(2, 8);
   .share-option svg {
     width: 17px;
     height: 17px;
-    opacity: 0.65;
+    opacity: 0.55;
     flex-shrink: 0;
   }
 
