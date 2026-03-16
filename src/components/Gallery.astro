@@ -175,10 +175,10 @@ const lbCounterId = `${galleryId}-counter`;
 
   function openLightbox(index) {
     current = Math.min(index + lightboxStartIndex, activeImages.length - 1);
-    updateLightbox();
     lightbox.hidden = false;
     lightbox.classList.add('visible');
     document.body.style.overflow = 'hidden';
+    updateLightbox();
     lbClose.focus();
   }
 
@@ -269,10 +269,10 @@ const lbCounterId = `${galleryId}-counter`;
     const requested = parseInt(params.get('photo') || '', 10);
     if (!Number.isNaN(requested)) {
       current = Math.max(0, Math.min(requested, activeImages.length - 1));
-      updateLightbox();
       lightbox.hidden = false;
       lightbox.classList.add('visible');
       document.body.style.overflow = 'hidden';
+      updateLightbox();
     }
   }
 </script>
