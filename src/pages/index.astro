@@ -224,6 +224,9 @@ import { days } from '../data/days';
     background: rgba(7, 16, 26, 0.96);
     transform: translateY(-1px);
   }
+  /* Icon-only share button — row is too tight for the label at any width */
+  .hero-links-row :global(.share-btn .share-label) { display: none; }
+
   @media (max-width: 480px) {
     #hero-replay-btn { right: 0.75rem; bottom: 0.75rem; font-size: 0.62rem; padding: 0.56rem 0.82rem; letter-spacing: 0.12em; }
     .hero-hud { max-width: calc(100% - 1rem); padding: 0.8rem 0.75rem; }

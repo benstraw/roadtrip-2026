@@ -1,79 +1,70 @@
 ---
-interface Props {
-  current: 'ridge' | 'elevation' | 'trip' | 'experiments' | 'tech' | 'tilestyles';
-}
-const { current } = Astro.props;
+import ShareButton from './ShareButton.astro';
 
-const links = [
-  { id: 'ridge',       label: 'The Ridge',  href: '/mapridge' },
-  { id: 'elevation',   label: 'Elevation',  href: '/mapelevation' },
-  { id: 'trip',        label: 'Full Trip',  href: '/maptrip' },
-  { id: 'experiments', label: 'Experiments',href: '/maptech' },
-  { id: 'tilestyles',  label: 'Tile Styles',href: '/tilestyles' },
-  { id: 'tech',        label: 'Tech',       href: '/maptech' },
-];
+interface Props {
+  title: string;
+  subtitle?: string;
+  /** Optional id on the back link — mapbook uses this to rewrite href via JS */
+  backId?: string;
+}
+
+const { title, subtitle, backId } = Astro.props;
 ---
 
-<nav class="map-nav">
-  {links.map(l => (
-    <a
-      href={l.href}
-      class:list={['map-nav-link', { active: l.id === current }]}
-    >
-      {l.label}
-    </a>
-  ))}
-  <span class="map-nav-divider"></span>
-  <a href="/" class="map-nav-link back">← Trip</a>
-</nav>
+<header class="map-nav">
+  <h1 class="map-nav-title">{title}</h1>
+  {subtitle && <span class="map-nav-subtitle">{subtitle}</span>}
+  <ShareButton iconOnly />
+  <a href="/" id={backId} class="map-nav-back">← Back to Trip</a>
+</header>
 
 <style>
   .map-nav {
-    margin-left: auto;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--border, #1e2e40);
     display: flex;
     align-items: center;
-    gap: 0.15rem;
-    flex-wrap: wrap;
+    gap: 1rem;
+    flex-shrink: 0;
   }
 
-  .map-nav-link {
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #4a4540;
-    text-decoration: none;
-    padding: 0.3rem 0.65rem;
-    border-radius: 3px;
-    transition: color 0.15s, background 0.15s;
-    font-family: 'Space Mono', monospace;
+  .map-nav-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent, #c8a84a);
     white-space: nowrap;
   }
 
-  .map-nav-link:hover {
-    color: #c8a84a;
-    background: rgba(200, 168, 74, 0.07);
+  .map-nav-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted, #8a7e6a);
+    white-space: nowrap;
   }
 
-  .map-nav-link.active {
-    color: #c8a84a;
-    background: rgba(200, 168, 74, 0.12);
+  .map-nav-back {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted, #8a7e6a);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.2s;
+    white-space: nowrap;
   }
 
-  .map-nav-divider {
-    width: 1px;
-    height: 14px;
-    background: #1a1f26;
-    margin: 0 0.25rem;
-  }
+  .map-nav-back:hover { color: var(--accent, #c8a84a); }
 
-  .map-nav-link.back {
-    color: #3a3630;
-    font-family: 'Raleway', sans-serif;
-    letter-spacing: 0.05em;
-  }
-
-  .map-nav-link.back:hover {
-    color: #c8a84a;
-    background: rgba(200, 168, 74, 0.07);
+  @media (max-width: 480px) {
+    .map-nav { padding: 0.75rem 0.8rem; gap: 0.65rem; }
+    .map-nav-title { font-size: 0.95rem; }
+    .map-nav-subtitle { display: none; }
+    .map-nav-back { font-size: 0.56rem; }
   }
 </style>

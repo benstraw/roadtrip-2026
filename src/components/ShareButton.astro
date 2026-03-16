@@ -1,24 +1,28 @@
 ---
 interface Props {
-  /** 'default' for standalone pages; 'nav' for the DayNav filmstrip bar */
-  variant?: 'default' | 'nav';
+  /** 'default' for standalone pages; 'nav' for DayNav filmstrip; 'stat' for the stats bar */
+  variant?: 'default' | 'nav' | 'stat';
+  /** Hide label and border — icon only */
+  iconOnly?: boolean;
 }
 
-const { variant = 'default' } = Astro.props;
+const { variant = 'default', iconOnly = false } = Astro.props;
 // Unique ID per instance so multiple buttons on one page don't conflict
 const uid = Math.random().toString(36).slice(2, 8);
 ---
 
-<div class:list={['share-wrap', `share-wrap--${variant}`]}>
+<div class:list={['share-wrap', `share-wrap--${variant}`, { 'share-wrap--icon-only': iconOnly }]}>
   <button class="share-btn" id={`share-btn-${uid}`} type="button" aria-label="Share this page">
     <!-- Standard share icon: three nodes connected by lines -->
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <circle cx="18" cy="5" r="3"/>
-      <circle cx="6" cy="12" r="3"/>
-      <circle cx="18" cy="19" r="3"/>
-      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-    </svg>
+    <span class="share-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </span>
     <span class="share-label">Share</span>
   </button>
 
@@ -181,15 +185,27 @@ const uid = Math.random().toString(36).slice(2, 8);
     letter-spacing: 0.14em;
   }
 
-  .share-btn svg {
+  .share-btn .share-icon {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .share-btn .share-icon svg {
     width: 13px;
     height: 13px;
-    flex-shrink: 0;
   }
 
   /* Hide label text on small screens — icon alone is sufficient */
   @media (max-width: 480px) {
     .share-btn .share-label { display: none; }
+  }
+
+  /* Icon-only mode: no label, no border */
+  .share-wrap--icon-only .share-btn {
+    border-color: transparent;
+  }
+  .share-wrap--icon-only .share-btn .share-label {
+    display: none;
   }
 
   /* ── NAV VARIANT: flush button for DayNav filmstrip-wrapper ─────────────── */
@@ -215,7 +231,7 @@ const uid = Math.random().toString(36).slice(2, 8);
     letter-spacing: 0.09em;
   }
 
-  .share-wrap--nav .share-btn svg {
+  .share-wrap--nav .share-btn .share-icon svg {
     width: 14px;
     height: 14px;
   }
@@ -380,5 +396,50 @@ const uid = Math.random().toString(36).slice(2, 8);
     margin-left: auto;
     min-width: 3rem;
     text-align: right;
+  }
+
+  /* ── STAT VARIANT: matches stat-map-link / stat-gallery-link in the stats bar */
+  .share-wrap--stat .share-btn {
+    border: none;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .share-wrap--stat .share-btn:hover {
+    background: none;
+    border: none;
+    opacity: 0.7;
+    letter-spacing: 0.1em;
+  }
+
+  /* Icon: matches the pin icon in stat-map-link */
+  .share-wrap--stat .share-btn .share-icon {
+    color: var(--accent, #c8a84a);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .share-wrap--stat .share-btn .share-icon svg {
+    width: 1rem;
+    height: 1rem;
+    opacity: 1;
+  }
+
+  /* Label: matches stat-lbl exactly — Raleway inherited from body, not Space Mono */
+  .share-wrap--stat .share-btn .share-label {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--textMuted, #8ab4cc);
+    font-weight: 400;
   }
 </style>

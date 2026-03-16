@@ -1,6 +1,5 @@
 ---
 import { days } from '../data/days';
-import ShareButton from './ShareButton.astro';
 
 interface Props {
   currentDay: number;
@@ -104,7 +103,6 @@ const nextDay = days.find(d => d.day === currentDay + 1);
         <polyline points="9,18 15,12 9,6"/>
       </svg>
     </button>
-    <ShareButton variant="nav" />
   </div>
 
   <!-- Keyboard nav hint -->
