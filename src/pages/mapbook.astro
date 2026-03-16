@@ -1,5 +1,6 @@
 ---
 import MapBase from '../layouts/MapBase.astro';
+import ShareButton from '../components/ShareButton.astro';
 ---
 <MapBase title="Map Book — The Road" leaflet>
 <style>
@@ -187,6 +188,7 @@ import MapBase from '../layouts/MapBase.astro';
 <header class="page-header">
   <h1>Map Book</h1>
   <span class="subtitle">Philadelphia → California · 9 days · 3,753 mi</span>
+  <ShareButton />
   <a href="/" id="back-link" class="back-link">← The Road</a>
 </header>
 

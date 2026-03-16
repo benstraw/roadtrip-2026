@@ -1,0 +1,344 @@
+---
+interface Props {
+  /** 'default' for standalone pages; 'nav' for the DayNav filmstrip bar */
+  variant?: 'default' | 'nav';
+}
+
+const { variant = 'default' } = Astro.props;
+// Unique ID per instance so multiple buttons on one page don't conflict
+const uid = Math.random().toString(36).slice(2, 8);
+---
+
+<div class:list={['share-wrap', `share-wrap--${variant}`]}>
+  <button class="share-btn" id={`share-btn-${uid}`} type="button" aria-label="Share this page">
+    <!-- Standard share icon: three nodes connected by lines -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="18" cy="5" r="3"/>
+      <circle cx="6" cy="12" r="3"/>
+      <circle cx="18" cy="19" r="3"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+    </svg>
+    Share
+  </button>
+
+  <div class="share-dialog" id={`share-dialog-${uid}`} hidden role="dialog" aria-modal="true" aria-label="Share options">
+    <div class="share-dialog-backdrop" id={`share-backdrop-${uid}`}></div>
+    <div class="share-dialog-inner">
+      <div class="share-dialog-header">
+        <span class="share-dialog-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share
+        </span>
+        <button class="share-dialog-close" id={`share-close-${uid}`} type="button" aria-label="Close share dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="share-dialog-options">
+        <!-- Copy link -->
+        <button class="share-option" id={`copy-btn-${uid}`} type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span class="option-label">Copy link</span>
+          <span class="copy-feedback" id={`copy-fb-${uid}`} aria-live="polite"></span>
+        </button>
+
+        <!-- Email -->
+        <a class="share-option" id={`email-btn-${uid}`} href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <span class="option-label">Send via email</span>
+        </a>
+
+        <!-- Print / Save PDF -->
+        <button class="share-option" id={`print-btn-${uid}`} type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          <span class="option-label">Print / Save as PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ uid }}>
+  const btn     = document.getElementById('share-btn-'     + uid);
+  const dialog  = document.getElementById('share-dialog-'  + uid);
+  const closeBtn= document.getElementById('share-close-'   + uid);
+  const backdrop= document.getElementById('share-backdrop-'+ uid);
+  const copyBtn = document.getElementById('copy-btn-'      + uid);
+  const emailBtn= document.getElementById('email-btn-'     + uid);
+  const printBtn= document.getElementById('print-btn-'     + uid);
+  const copyFb  = document.getElementById('copy-fb-'       + uid);
+
+  function openDialog() {
+    emailBtn.href =
+      'mailto:?subject=' + encodeURIComponent(document.title) +
+      '&body=' + encodeURIComponent(window.location.href);
+    dialog.hidden = false;
+    closeBtn.focus();
+  }
+
+  function closeDialog() {
+    dialog.hidden = true;
+    btn.focus();
+  }
+
+  btn.addEventListener('click', async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url: window.location.href });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return; // user cancelled native sheet
+      }
+    }
+    openDialog();
+  });
+
+  closeBtn.addEventListener('click', closeDialog);
+  backdrop.addEventListener('click', closeDialog);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !dialog.hidden) closeDialog();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Legacy fallback
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    copyFb.textContent = 'Copied!';
+    setTimeout(() => { copyFb.textContent = ''; }, 2000);
+  });
+
+  printBtn.addEventListener('click', () => {
+    closeDialog();
+    setTimeout(() => window.print(), 120);
+  });
+</script>
+
+<style>
+  /* ── WRAPPER ─────────────────────────────────────────────────────────────── */
+  .share-wrap {
+    display: contents; /* transparent in layout — callers use their own flex/grid */
+  }
+
+  /* ── TRIGGER BUTTON (default: styled like the site's secondary links) ───── */
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent, #c8a84a);
+    border: 1px solid rgba(200, 168, 74, 0.42);
+    background: rgba(7, 16, 26, 0.44);
+    border-radius: 3px;
+    padding: 0.38rem 0.62rem;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, letter-spacing 0.18s;
+    white-space: nowrap;
+  }
+
+  .share-btn:hover {
+    background: rgba(200, 168, 74, 0.12);
+    border-color: rgba(200, 168, 74, 0.65);
+    letter-spacing: 0.14em;
+  }
+
+  .share-btn svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  /* ── NAV VARIANT: flush button for DayNav filmstrip-wrapper ─────────────── */
+  .share-wrap--nav .share-btn {
+    border-radius: 0;
+    border: none;
+    border-left: 1px solid var(--border, rgba(255,255,255,0.06));
+    background: transparent;
+    padding: 0 0.75rem;
+    color: var(--text-muted, #8ab4cc);
+    align-self: stretch;
+    font-size: 0.5rem;
+    letter-spacing: 0.09em;
+    height: 100%;
+  }
+
+  .share-wrap--nav .share-btn:hover {
+    color: var(--accent, #7ebcd6);
+    background: rgba(255,255,255,0.03);
+    border-color: var(--border, rgba(255,255,255,0.06));
+    letter-spacing: 0.09em;
+  }
+
+  .share-wrap--nav .share-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── MODAL OVERLAY ────────────────────────────────────────────────────────── */
+  .share-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .share-dialog[hidden] {
+    display: none !important;
+  }
+
+  .share-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .share-dialog-inner {
+    position: relative;
+    z-index: 1;
+    background: #0f1c2e;
+    border: 1px solid rgba(200, 168, 74, 0.35);
+    border-radius: 6px;
+    padding: 1.25rem;
+    min-width: 260px;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  }
+
+  .share-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .share-dialog-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent, #c8a84a);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .share-dialog-title svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .share-dialog-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .share-dialog-close:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .share-dialog-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ── OPTIONS LIST ─────────────────────────────────────────────────────────── */
+  .share-dialog-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .share-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+    color: #e8e0cc;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .share-option:hover {
+    background: rgba(200, 168, 74, 0.1);
+    border-color: rgba(200, 168, 74, 0.3);
+    color: #f0e8d8;
+  }
+
+  .share-option svg {
+    width: 17px;
+    height: 17px;
+    opacity: 0.65;
+    flex-shrink: 0;
+  }
+
+  .option-label {
+    flex: 1;
+  }
+
+  .copy-feedback {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: #8cd6a8;
+    margin-left: auto;
+    min-width: 3rem;
+    text-align: right;
+  }
+</style>

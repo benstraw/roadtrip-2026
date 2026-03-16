@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import DayNav from '../../components/DayNav.astro';
 import Gallery from '../../components/Gallery.astro';
+import ShareButton from '../../components/ShareButton.astro';
 import { days } from '../../data/days';
 import fs from 'node:fs';
 
@@ -856,6 +857,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
         </svg>
         All Photos
       </a>
+      <ShareButton />
     </div>
 
     <div class="hero-meta">

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Gallery from '../components/Gallery.astro';
+import ShareButton from '../components/ShareButton.astro';
 import { groupGalleryItemsByDay, tripTotals } from '../data/days';
 
 const grouped = groupGalleryItemsByDay();
@@ -246,6 +247,7 @@ const groupedWithOffsets = grouped.map((entry) => {
     </a>
     <a class="back-link" href="/mapbook">Map Book</a>
     <a class="back-link" href="/almanac">Almanac</a>
+    <ShareButton />
   </nav>
   <h1>Photo Gallery</h1>
   <p class="hero-sub">Every photo and video from the trip, grouped by day.</p>

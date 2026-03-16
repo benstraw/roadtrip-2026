@@ -2,6 +2,7 @@
 import { days } from '../data/days';
 import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
+import ShareButton from '../components/ShareButton.astro';
 const daysWithGpx = days.filter(d => d.gpxUrl);
 ---
 <MapBase title="Tile Styles — The Road" leaflet>
@@ -218,6 +219,7 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
 <!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
 <header class="page-header">
   <h1>Tile Styles</h1>
+  <ShareButton />
   <a href="/" class="back-link">← Back to Trip</a>
 </header>
 <div class="pager-wrap"><ExperimentPager current="/tilestyles" /></div>
