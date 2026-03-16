@@ -1,6 +1,7 @@
 ---
 import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
+import MapNav from '../components/MapNav.astro';
 ---
 <MapBase title="Tech — The Road" description="How the mapping was built: library choices, tile providers, GPX pipeline, and D3 visualization.">
 <style>
@@ -15,15 +16,6 @@ import MapBase from '../layouts/MapBase.astro';
       font-family: 'Raleway', system-ui, sans-serif;
       line-height: 1.7;
     }
-
-    /* ─── HEADER ─── */
-    .page-header {
-      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    }
-    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
-    .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
-    .back-link:hover { color: var(--accent); }
 
     /* ─── LAYOUT ─── */
     .tech-body {
@@ -212,10 +204,7 @@ import MapBase from '../layouts/MapBase.astro';
     }
   </style>
 
-<header class="page-header">
-  <h1>Tech</h1>
-  <a href="/" class="back-link">← Back to Trip</a>
-</header>
+<MapNav title="Tech" />
 <div class="pager-wrap">
   <ExperimentPager current="/maptrip" />
 </div>

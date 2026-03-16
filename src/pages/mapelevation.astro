@@ -1,6 +1,7 @@
 ---
 import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
+import MapNav from '../components/MapNav.astro';
 ---
 <MapBase title="Elevation — The Road" leaflet>
 <style>
@@ -12,14 +13,6 @@ import MapBase from '../layouts/MapBase.astro';
     html, body { height: 100%; overflow: hidden; }
     body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; display: flex; flex-direction: column; }
 
-    /* ─── HEADER ─── */
-    .page-header {
-      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-shrink: 0;
-    }
-    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
-    .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
-    .back-link:hover { color: var(--accent); }
     .pager-wrap { padding: 0.7rem 1rem 0.9rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 
 
@@ -98,10 +91,7 @@ import MapBase from '../layouts/MapBase.astro';
     }
   </style>
 
-<header class="page-header">
-  <h1>Elevation</h1>
-  <a href="/" class="back-link">← Back to Trip</a>
-</header>
+<MapNav title="Elevation" />
 <div class="pager-wrap"><ExperimentPager current="/mapelevation" /></div>
 
 <div class="loading-strip"><div class="loading-fill" id="loading-fill"></div></div>

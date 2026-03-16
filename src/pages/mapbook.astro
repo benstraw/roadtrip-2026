@@ -1,5 +1,6 @@
 ---
 import MapBase from '../layouts/MapBase.astro';
+import MapNav from '../components/MapNav.astro';
 ---
 <MapBase title="Map Book — The Road" leaflet>
 <style>
@@ -14,30 +15,6 @@ import MapBase from '../layouts/MapBase.astro';
     font-family: 'Raleway', system-ui, sans-serif;
     display: flex; flex-direction: column;
   }
-
-  /* ── HEADER ── */
-  .page-header {
-    padding: 0.9rem 2rem;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0;
-  }
-  .page-header h1 {
-    font-family: 'Playfair Display', serif; font-size: 1.1rem;
-    color: var(--accent); white-space: nowrap;
-  }
-  .subtitle {
-    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--text-muted); white-space: nowrap;
-  }
-  .back-link {
-    margin-left: auto;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-muted); text-decoration: none;
-    display: flex; align-items: center; gap: 0.4rem;
-    transition: color 0.2s; white-space: nowrap;
-  }
-  .back-link:hover { color: var(--accent); }
 
   /* ── DAY STRIP ── */
   .day-strip {
@@ -167,10 +144,6 @@ import MapBase from '../layouts/MapBase.astro';
   .leaflet-popup-tip { background: var(--surface) !important; }
 
   @media (max-width: 640px) {
-    .subtitle { display: none; }
-    .page-header { padding: 0.75rem 0.8rem; gap: 0.8rem; }
-    .page-header h1 { font-size: 0.95rem; }
-    .back-link { font-size: 0.56rem; }
     .day-strip { display: none; }
     .mobile-day-controls { display: flex; }
     .elev-panel.open { max-height: 196px; }
@@ -184,11 +157,7 @@ import MapBase from '../layouts/MapBase.astro';
 </style>
 
 <!-- HEADER -->
-<header class="page-header">
-  <h1>Map Book</h1>
-  <span class="subtitle">Philadelphia → California · 9 days · 3,753 mi</span>
-  <a href="/" id="back-link" class="back-link">← The Road</a>
-</header>
+<MapNav title="Map Book" subtitle="Philadelphia → California · 9 days · 3,753 mi" backId="back-link" />
 
 <!-- DAY STRIP -->
 <div class="day-strip" id="day-strip">

@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import ShareButton from '../components/ShareButton.astro';
 import { days, tripTotals } from '../data/days';
 import {
   stateData,
@@ -75,11 +76,18 @@ const elevRange = maxElev - minElev;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 2.5rem;
     transition: color 0.2s;
   }
   .back-link:hover { color: var(--accent); }
   .back-link svg { width: 12px; height: 12px; }
+
+  .hero-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
 
   .hero-eyebrow {
     font-family: 'Space Mono', monospace;
@@ -745,13 +753,15 @@ const elevRange = maxElev - minElev;
 
 <!-- HERO -->
 <section class="hero">
-  <a href="/" class="back-link">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="15,18 9,12 15,6"/>
-    </svg>
-    The Road
-  </a>
-
+  <div class="hero-nav-row">
+    <a href="/" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"/>
+      </svg>
+      The Road
+    </a>
+    <ShareButton iconOnly />
+  </div>
   <p class="hero-eyebrow">
     <span class="eyebrow-line"></span>
     Philadelphia to Los Angeles · Jan 30 – Feb 7, 2026

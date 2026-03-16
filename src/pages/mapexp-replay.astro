@@ -1,17 +1,13 @@
 ---
 import ExperimentPager from '../components/ExperimentPager.astro';
 import MapBase from '../layouts/MapBase.astro';
+import MapNav from '../components/MapNav.astro';
 ---
 <MapBase title="Replay — The Road" leaflet>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root { --bg:#0c1420; --bg-deep:#07101a; --surface:#111e30; --accent:#c8a84a; --text:#e8e0d0; --text-muted:#8a7e6a; --border:#1e2e40; }
   body { background: var(--bg); color: var(--text); font-family: 'Raleway', system-ui, sans-serif; }
-
-  .page-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-  .back-link { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; }
-  .back-link:hover { color: var(--accent); }
-  h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent); }
 
   .body { max-width: 1200px; margin: 0 auto; padding: 1.25rem; }
   .desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.9rem; }
@@ -30,10 +26,7 @@ import MapBase from '../layouts/MapBase.astro';
   @media (max-width: 700px) { #map-replay { height: 420px; } }
 </style>
 
-<header class="page-header">
-  <a href="/" class="back-link">← Back to Trip</a>
-  <h1>Replay</h1>
-</header>
+<MapNav title="Replay" />
 <div class="body" style="padding-bottom:0.6rem;">
   <ExperimentPager current="/mapexp-replay" />
 </div>

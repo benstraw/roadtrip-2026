@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import DayNav from '../../components/DayNav.astro';
 import Gallery from '../../components/Gallery.astro';
+import ShareButton from '../../components/ShareButton.astro';
 import { days } from '../../data/days';
 import fs from 'node:fs';
 
@@ -313,6 +314,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   .stat-gallery-link {
     text-decoration: none;
     transition: opacity 0.2s;
+    align-items: center;
   }
   .stat-gallery-link:hover { opacity: 0.7; }
   .stat-gallery-link .stat-lbl {
@@ -329,6 +331,7 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
   .stat-map-link {
     text-decoration: none;
     transition: opacity 0.2s;
+    align-items: center;
   }
   .stat-map-link:hover { opacity: 0.7; }
   .stat-map-link .stat-lbl {
@@ -915,6 +918,8 @@ const heroPhoto = mapExt ? `/images/days/${day.day}/map.${mapExt}` : null;
       </a>
     </>
   )}
+  <div class="stat-divider" aria-hidden="true"></div>
+  <ShareButton variant="stat" />
 </div>
 
 <!-- ─── MAIN CONTENT ────────────────────────────────────────────────────────── -->
