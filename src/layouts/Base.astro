@@ -12,8 +12,8 @@ interface Props {
 
 const { title, description = 'A father and son road trip from Philadelphia to California, January–February 2026. Nine days in a red 2008 Toyota Tacoma.', theme, ogImage } = Astro.props;
 
-const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY ?? '';
-const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST ?? 'https://t.benstrawbridge.com';
+const posthogKey = (import.meta.env.PUBLIC_POSTHOG_KEY ?? '').trim();
+const posthogHost = (import.meta.env.PUBLIC_POSTHOG_HOST ?? 'https://t.benstrawbridge.com').trim();
 
 const ogImageUrl = ogImage ? new URL(ogImage, Astro.site).href : undefined;
 
