@@ -77,7 +77,7 @@ async function parseGPX(url) {
 
 (async function initReplay() {
   const map = L.map('map-replay', { scrollWheelZoom: false, center: [35, -95], zoom: 4 });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 18, subdomains: 'abcd' }).addTo(map);
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png', { attribution: '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
   const playBtn = document.getElementById('replay-play');
   const resetBtn = document.getElementById('replay-reset');
   const dayLabel = document.getElementById('replay-day-label');

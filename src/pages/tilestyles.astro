@@ -227,11 +227,11 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
 <!-- ─── EXPERIMENTS ──────────────────────────────────────────────────────────── -->
 <div class="experiments">
 
-  <!-- Experiment 1: Carto Dark Matter -->
+  <!-- Experiment 1: Stadia Alidade Smooth Dark -->
   <div class="experiment" id="exp-dark">
     <div class="experiment-header">
       <span class="experiment-name">01</span>
-      <span class="experiment-label">Carto Dark Matter</span>
+      <span class="experiment-label">Stadia Alidade Smooth Dark</span>
       <span class="experiment-desc">Dark base tiles. Track pops in cyan. Matches the site's night palette.</span>
     </div>
     <div id="map-dark" class="map-container">
@@ -242,11 +242,11 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     </div>
   </div>
 
-  <!-- Experiment 2: Carto Voyager -->
+  <!-- Experiment 2: Stadia OSM Bright -->
   <div class="experiment" id="exp-voyager">
     <div class="experiment-header">
       <span class="experiment-name">02</span>
-      <span class="experiment-label">Carto Voyager</span>
+      <span class="experiment-label">Stadia OSM Bright</span>
       <span class="experiment-desc">Colorful, detailed streets. Good for reading city names and highway labels.</span>
     </div>
     <div id="map-voyager" class="map-container">
@@ -257,11 +257,11 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     </div>
   </div>
 
-  <!-- Experiment 3: Carto Positron -->
+  <!-- Experiment 3: Stadia Alidade Smooth -->
   <div class="experiment" id="exp-light">
     <div class="experiment-header">
       <span class="experiment-name">03</span>
-      <span class="experiment-label">Carto Positron</span>
+      <span class="experiment-label">Stadia Alidade Smooth</span>
       <span class="experiment-desc">Clean, minimal light base. Track and markers stand out clearly.</span>
     </div>
     <div id="map-light" class="map-container">
@@ -419,24 +419,24 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
   const CONFIGS = [
     {
       id: 'dark',
-      tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      tiles: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       trackColor: '#7ebcd6',
       startColor: '#4adf8a',
       endColor: '#e05555',
     },
     {
       id: 'voyager',
-      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      tiles: 'https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       trackColor: '#d63b3b',
       startColor: '#2266dd',
       endColor: '#dd2222',
     },
     {
       id: 'light',
-      tiles: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      tiles: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       trackColor: '#0055cc',
       startColor: '#229922',
       endColor: '#cc2222',
@@ -578,7 +578,7 @@ const daysWithGpx = days.filter(d => d.gpxUrl);
     L.tileLayer(cfg.tiles, {
       attribution: cfg.attribution,
       maxZoom: 18,
-      ...(cfg.noSubdomains ? {} : { subdomains: 'abcd' }),
+      ...(cfg.noSubdomains ? {} : { subdomains: 'abc' }),
     }).addTo(map);
 
     const gpxLayer = new L.GPX(GPX_URL, {

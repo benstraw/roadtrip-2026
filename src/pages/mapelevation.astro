@@ -198,8 +198,8 @@ function buildSeries(rawPts) {
 // ─── MAP INIT ────────────────────────────────────────────────────────────────
 
 const map = L.map('map-elev', { scrollWheelZoom: true, center: [35, -90], zoom: 5 });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18, subdomains: 'abcd',
+L.tileLayer('https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap', maxZoom: 18,
 }).addTo(map);
 
 const mapLines = {};   // day → L.polyline

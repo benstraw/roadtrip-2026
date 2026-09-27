@@ -71,7 +71,7 @@ async function parseGPX(url) {
 
 (async function init() {
   const map = L.map('map-speed', { scrollWheelZoom: false, center: [35, -90], zoom: 5 });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 18, subdomains: 'abcd' }).addTo(map);
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', { attribution: '&copy; Stadia Maps &copy; OpenMapTiles &copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
   const statusEl = document.getElementById('speed-status');
   let loaded = 0;
   const allBounds = [];
