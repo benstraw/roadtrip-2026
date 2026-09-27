@@ -223,6 +223,14 @@ const lbCounterId = `${galleryId}-counter`;
       nextUrl.searchParams.set('gallery', galleryId);
       nextUrl.searchParams.set('photo', String(current));
       history.replaceState({}, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+
+      window.posthog?.capture('photo_viewed', {
+        gallery: galleryId,
+        index: current,
+        src: item.src,
+        caption: item.caption || item.alt || '',
+        media: item.video ? 'video' : 'photo',
+      });
     }
   }
 
