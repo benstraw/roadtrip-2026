@@ -115,6 +115,7 @@ const nextDay = days.find(d => d.day === currentDay + 1);
 <script define:vars={{ prevSlug: prevDay?.slug, nextSlug: nextDay?.slug }}>
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (document.querySelector('.lightbox:not([hidden])')) return;
     if (e.key === 'ArrowLeft' && prevSlug) window.location.href = `/days/${prevSlug}`;
     if (e.key === 'ArrowRight' && nextSlug) window.location.href = `/days/${nextSlug}`;
   });
